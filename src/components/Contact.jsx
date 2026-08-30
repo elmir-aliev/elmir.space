@@ -12,7 +12,7 @@ export function Contact() {
       <h2 className="contact__title reveal" style={{ '--i': 1 }}>
         Давайте сделаем
         <br />
-        что-то заметное
+        что-то <span>заметное</span>
       </h2>
 
       <a className="contact__mail reveal" style={{ '--i': 2 }} href="mailto:elmir.aliev.1689@gmail.com">

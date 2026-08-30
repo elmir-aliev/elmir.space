@@ -5,7 +5,7 @@ import { Naming } from './Naming';
 
 /**
  * Первый экран: залипает, пока страница уходит вверх.
- * Слои двигаются с разной скоростью, заголовок масштабируется —
+ * Заголовок и цветок уходят с разной скоростью и гаснут —
  * всё считается из одной переменной --p прямо в CSS.
  *
  * Справа от текста растёт ASCII-цветок. Когда он дорос, под его листвой
@@ -41,15 +41,12 @@ export function Hero() {
   return (
     <section ref={ref} className="hero" id="top">
       <div className="hero__sticky">
-        <div className="hero__layer hero__layer--back" aria-hidden="true" />
-        <div className="hero__layer hero__layer--mid" aria-hidden="true" />
-
         <div className="hero__content">
           <p className="hero__kicker">Фронтенд-разработчик — Санкт-Петербург</p>
           <h1 className="hero__title">
-            Интерфейсы,
+            Приложения,
             <br />
-            которые <br/> <em>живут</em>
+            которые <br/> <em>можно почувствовать</em>
           </h1>
           <p className="hero__lead">
             React, Three.js, Lenis. Собираю сайты, которые
