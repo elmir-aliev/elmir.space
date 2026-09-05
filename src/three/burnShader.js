@@ -1,4 +1,4 @@
-export const burnVertexShader = /* glsl */ `
+export const burnVertexShader = `
   varying vec2 vUv;
 
   void main() {
@@ -7,7 +7,7 @@ export const burnVertexShader = /* glsl */ `
   }
 `;
 
-export const burnFragmentShader = /* glsl */ `
+export const burnFragmentShader = `
   precision highp float;
 
   uniform sampler2D uTexture;
@@ -44,7 +44,6 @@ export const burnFragmentShader = /* glsl */ `
     return sum;
   }
 
-  // Вписываем текстуру по принципу background-size: cover
   vec2 coverUv(vec2 uv, vec2 res, vec2 texRes) {
     float canvasAspect = res.x / res.y;
     float texAspect = texRes.x / texRes.y;
@@ -58,31 +57,24 @@ export const burnFragmentShader = /* glsl */ `
     vec2 uv = coverUv(vUv, uResolution, uTexResolution);
     vec4 tex = texture2D(uTexture, uv);
 
-    // Радиальное поле: 0 в центре кадра, ~1 в углах
     vec2 centered = (vUv - 0.5) * vec2(uResolution.x / uResolution.y, 1.0);
     float radius = length(centered) / length(vec2(uResolution.x / uResolution.y, 1.0) * 0.5);
 
-    // Шум рвёт ровную окружность — иначе фронт выглядит механическим.
-    // Крупный слой задаёт форму, мелкий — изрезанность самой кромки.
     float turbulence = fbm(vUv * 5.2 + vec2(uTime * 0.05, uTime * -0.04));
     float detail = noise(vUv * 22.0 + uTime * 0.3);
     float threshold = mix(radius, turbulence, 0.34) + (detail - 0.5) * 0.035;
 
-    // Запас с обеих сторон, чтобы на 0 было целое полотно, а на 1 — пустота
     float front = mix(-0.08, 1.18, uProgress);
-    float d = threshold - front; // >0 — ещё цело, <0 — уже сгорело
+    float d = threshold - front;
 
     float alpha = smoothstep(0.0, 0.010, d);
 
-    // Узкая полоса обугливания перед фронтом
     vec3 color = mix(tex.rgb * 0.06, tex.rgb, smoothstep(0.006, 0.048, d));
 
-    // Раскалённая кромка: от бело-жёлтого у самого края к глубокому оранжевому
     float glow = 1.0 - smoothstep(0.0, 0.042, d);
     vec3 ember = mix(vec3(1.0, 0.95, 0.72), vec3(1.0, 0.24, 0.02), smoothstep(0.0, 0.042, d));
     color += ember * glow * glow * 2.1;
 
-    // Разлетающиеся угольки по линии фронта
     float sparkNoise = noise(vUv * 130.0 + uTime * 2.2);
     float spark = smoothstep(0.9, 1.0, sparkNoise) * (1.0 - smoothstep(0.0, 0.03, abs(d)));
     color += vec3(1.0, 0.5, 0.12) * spark * 2.4;

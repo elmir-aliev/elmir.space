@@ -1,67 +1,83 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import { useScrollProgress } from '../scroll/useScrollProgress';
-import { AsciiFlower } from './AsciiFlower';
-import { Naming } from './Naming';
+import { AsciiVideo } from './AsciiVideo';
 
-/**
- * Первый экран: залипает, пока страница уходит вверх.
- * Заголовок и цветок уходят с разной скоростью и гаснут —
- * всё считается из одной переменной --p прямо в CSS.
- *
- * Справа от текста растёт ASCII-цветок. Когда он дорос, под его листвой
- * проявляется поле: введённое имя становится рампой рисунка, и цветок
- * перерисовывается его буквами.
- */
+// Видео ставится на паузу, когда первый экран целиком ушёл за верх окна.
+const GONE = 1;
 
-const NAME_LIMIT = 12;
+// Текст спрятан, пока идёт glyph-matrix, и выходит, когда матрица растворилась
+// и человек собрался целиком (onSettled у AsciiVideo).
+const TEXT_DELAY = 0.1;
 
-/* К этому прогрессу текст и цветок уже погасли: экран уходит, и поле имени
-   вместе с ним — иначе в него можно было бы попасть табом вслепую. */
-const FADED = 0.7;
-
-/* Пробел в рампе выбил бы из рисунка целый уровень плотности — он бы стал дырами. */
-function cleanName(raw) {
-  return raw.replace(/\s+/g, '').toUpperCase().slice(0, NAME_LIMIT);
-}
+// Пока идёт матрица, шапка спрятана классом на <html> (см. .hero-matrix в CSS)
+// и возвращается вместе с текстом.
+const MATRIX_CLASS = 'hero-matrix';
 
 export function Hero() {
   const ref = useRef(null);
-  const [name, setName] = useState('');
-  const [grown, setGrown] = useState(false);
-  const [faded, setFaded] = useState(false);
+  const contentRef = useRef(null);
+  const [gone, setGone] = useState(false);
 
-  // Прогресс приходит каждый кадр, но состояние меняется только на переходе
-  // через порог — на одинаковом значении React ре-рендер не запускает.
-  const handleProgress = useCallback((progress) => setFaded(progress > FADED), []);
-  const handleSettled = useCallback(() => setGrown(true), []);
-  const handleName = useCallback((event) => setName(cleanName(event.target.value)), []);
+  const handleProgress = useCallback((progress) => setGone(progress >= GONE), []);
 
-  useScrollProgress(ref, { mode: 'pinned', varName: '--p', onChange: handleProgress });
+  useScrollProgress(ref, { mode: 'through', varName: null, onChange: handleProgress });
+
+  useLayoutEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return undefined;
+    const targets = contentRef.current.querySelectorAll('.hero__kicker, .hero__line');
+    gsap.set(targets, { opacity: 0 });
+    document.documentElement.classList.add(MATRIX_CLASS);
+    return () => {
+      gsap.set(targets, { clearProps: 'all' });
+      document.documentElement.classList.remove(MATRIX_CLASS);
+    };
+  }, []);
+
+  const reveal = useCallback(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const kicker = content.querySelector('.hero__kicker');
+    const lines = content.querySelectorAll('.hero__line');
+    // Размытие крупного текста дорого для телефона — там только сдвиг и прозрачность.
+    const blur = window.matchMedia('(min-width: 900px)').matches;
+    const from = (px) => (blur ? { filter: `blur(${px}px)` } : {});
+    const to = blur ? { filter: 'blur(0px)', clearProps: 'filter' } : {};
+
+    gsap
+      .timeline({ delay: TEXT_DELAY, defaults: { ease: 'power3.out' } })
+      .call(() => document.documentElement.classList.remove(MATRIX_CLASS), null, 0)
+      .fromTo(
+        kicker,
+        { opacity: 0, y: 14, ...from(6) },
+        { opacity: 1, y: 0, duration: 1, ...to },
+        0,
+      )
+      .fromTo(
+        lines,
+        { opacity: 0, y: '0.45em', ...from(14) },
+        { opacity: 1, y: 0, duration: 1.4, stagger: 0.16, ...to },
+        0.15,
+      );
+  }, []);
 
   return (
     <section ref={ref} className="hero" id="top">
       <div className="hero__sticky">
-        <div className="hero__content">
+        <AsciiVideo paused={gone} onSettled={reveal} />
+
+        <div className="hero__content" ref={contentRef}>
           <p className="hero__kicker">Фронтенд-разработчик — Санкт-Петербург</p>
           <h1 className="hero__title">
-            Приложения,
-            <br />
-            которые <br/> <em>можно почувствовать</em>
+            <span className="hero__line">Приложения,</span>
+            <span className="hero__line">которые</span>
+            <em className="hero__line">
+              <span className="hero__title-pull">можно</span> полюбить
+            </em>
           </h1>
-          <p className="hero__lead">
-            React, Three.js, Lenis. Собираю сайты, которые
-            запоминаются с первого экрана.
-          </p>
-        </div>
-
-        <div className="hero__flower" inert={faded || undefined}>
-          <Naming active={grown} value={name} onChange={handleName} />
-          <AsciiFlower ramp={name} onSettled={handleSettled} />
-        </div>
-
-        <div className="hero__scroll" aria-hidden="true">
-          <span>Листайте</span>
-          <i />
         </div>
       </div>
     </section>

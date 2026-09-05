@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import designMode from './tools/design-mode/plugin.js';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), designMode()],
   build: {
-    // three весит немало — выносим в отдельный чанк, чтобы не тормозить первый экран
     rollupOptions: {
       output: {
         manualChunks(id) {

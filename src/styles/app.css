@@ -1,4 +1,4 @@
-@import './fonts.css';
+@import "./fonts.css";
 
 :root {
   --bg: #0b0b0d;
@@ -8,12 +8,11 @@
   --line: rgba(243, 240, 234, 0.14);
   --accent: #b5292b;
 
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  /* Курсивная антиква — только выделенные слова внутри крупных заголовков */
-  --font-accent: 'Nyght Serif', 'Iowan Old Style', Georgia, serif;
-  /* ASCII-цветку моноширинность структурная: на пропорциональном шрифте
-     рисунок рассыпается на строки разной длины. Тем же набрано поле имени. */
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, 'Cascadia Mono', monospace;
+  --font:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-accent: "Nyght Serif", "Iowan Old Style", Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, "Cascadia Mono", monospace;
   --pad: clamp(20px, 5vw, 72px);
   text-transform: uppercase;
 }
@@ -28,6 +27,13 @@ html,
 body {
   margin: 0;
   padding: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -46,12 +52,27 @@ figure {
   margin: 0;
 }
 
+/* Выделение: на светлом тексте красное, на красном (акцентном) — светлое.
+   Дочерние элементы перечислены отдельно: ::selection не наследуется. */
+::selection {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.hero__title em::selection,
+.hero__title em *::selection,
+.intro__text-accent::selection,
+.burn__kicker::selection,
+.contact__title span::selection,
+.contact__mail:hover::selection {
+  background: var(--text);
+  color: var(--accent);
+}
+
 a {
   color: inherit;
   text-decoration: none;
 }
-
-/* ---------- Появление блоков ---------- */
 
 .reveal {
   opacity: 0;
@@ -68,8 +89,6 @@ a {
   transform: none;
 }
 
-/* ---------- Шапка ---------- */
-
 .header {
   position: fixed;
   inset: 0 0 auto 0;
@@ -79,6 +98,20 @@ a {
   justify-content: space-between;
   padding: 22px var(--pad);
   mix-blend-mode: difference;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.9s ease;
+}
+
+/* Пока первый экран живёт как glyph-matrix, шапки нет — она проявляется вместе с текстом. */
+.hero-matrix .header {
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+
+.header--hidden {
+  transform: translate3d(0, -100%, 0);
 }
 
 .header__logo {
@@ -106,30 +139,36 @@ a {
   color: var(--text);
 }
 
-/* ---------- Первый экран ---------- */
-
 .hero {
-  height: 200vh;
+  /* Лишняя высота сверх экрана — ход hero: он стоит на месте, гаснет и стекает
+     каплей (MorphBackdrop двигает .hero__sticky opacity). 60vh — столько нужно
+     самому превращению; «О себе» начинается сразу за ним, без пустого стекла. */
+  height: 160vh;
 }
 
 .hero__sticky {
   position: sticky;
   top: 0;
   height: 100vh;
+  /* Поверх наехавшего снизу «О себе», пока hero не погас. */
+  z-index: 1;
+  will-change: transform, opacity;
+  /* Фон обязан быть непрозрачным: ASCII-человек смешивается с ним режимом
+     screen; над прозрачным фоном чёрная подложка кадра рисовалась как есть —
+     полоса другого оттенка слева и жёсткий прямоугольник при сжатии.
+     Сжатие в каплю делает clip-path от MorphBackdrop, а не прозрачность. */
   background: var(--bg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0 var(--pad);
+  justify-content: flex-start;
+  padding: 16vh var(--pad) 0;
 }
 
 .hero__content {
   position: relative;
+  z-index: 1;
   max-width: min(92vw, 1100px);
-  transform: translate3d(0, calc(var(--p, 0) * -10vh), 0) scale(calc(1 - var(--p, 0) * 0.1));
-  opacity: calc(1 - var(--p, 0) * 1.5);
-  will-change: transform;
 }
 
 .hero__kicker {
@@ -142,15 +181,16 @@ a {
 
 .hero__title {
   font-size: clamp(46px, 9vw, 132px);
-  line-height: 0.92;
+  line-height: 1.05;
   letter-spacing: -0.04em;
   font-weight: 600;
 }
 
-/* Акцент набран антиквой. Вес 400 задан явно: без него сюда протёк бы полужир
-   заголовка и браузер стал бы дорисовывать его алгоритмом поверх тонкого
-   начертания, а курсив тут не наклон, а отдельный шрифт — он и подключён
-   под font-style: italic. */
+.hero__line {
+  display: block;
+  will-change: transform, filter;
+}
+
 .hero__title em {
   font-family: var(--font-accent);
   font-weight: 400;
@@ -159,64 +199,89 @@ a {
   color: var(--accent);
 }
 
-.hero__lead {
-  margin-top: 30px;
-  max-width: 42ch;
-  font-size: clamp(15px, 1.4vw, 18px);
-  line-height: 1.55;
-  color: var(--muted);
-}
-
-.hero__scroll {
-  position: absolute;
-  left: var(--pad);
-  bottom: 40px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  opacity: calc(1 - var(--p, 0) * 3);
-}
-
-.hero__scroll i {
-  display: block;
-  width: 54px;
-  height: 1px;
-  background: currentColor;
-  transform-origin: left;
-  animation: scroll-hint 2.4s ease-in-out infinite;
-}
-
-/* ---------- ASCII-цветок первого экрана ---------- */
-
-/*
- * Цветок с полем имени. Первый экран залипший и ровно в 100vh с overflow:
- * hidden, поэтому рисунок ограничен и по ширине, и по высоте — что не влезло,
- * было бы просто срезано по стеблю.
- */
-.hero__flower {
+/* «Можно» наезжает на «которые» и отделяется от него тонким контуром цвета фона. */
+.hero__title-pull {
   position: relative;
-  margin-top: clamp(20px, 4vh, 40px);
-  /* Уезжает вместе с текстом, только медленнее — как и фоновые слои */
-  transform: translate3d(0, calc(var(--p, 0) * -6vh), 0);
-  opacity: calc(1 - var(--p, 0) * 1.5);
-  will-change: transform;
+  z-index: 1;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 2px var(--bg);
 }
 
-/*
- * Рисунок — жёсткая сетка 81x56 моноширинных клеток, растянуть её нельзя:
- * размер задаётся только кеглем. В столбик под текстом рисунку остаётся
- * меньше половины экрана — отсюда и жёсткий предел по vh.
- */
+/* На телефонах кадр шире экрана и прижат правым краем: человек с ноутбуком —
+   правые две трети кадра, они и остаются во всю ширину внизу; высота не больше 58vh. */
+.ascii-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  right: -14vw;
+  mix-blend-mode: screen;
+  font-size: min(calc(170vw / (var(--cols) * 0.6)), calc(58vh / var(--rows)));
+}
+
+.ascii-video__frame {
+  position: relative;
+  width: max-content;
+}
+
+/* Само видео на экране не показывается — оно источник для холста ниже;
+   без фильтров и блендов, чтобы не грузить телефон. */
+.ascii-video__source {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Цвет кадра по клетке; растягивается на кадр и красит знаки через multiply/screen.
+   На 1px уже кадра со всех сторон: на дробном краю слой знаков полупрозрачен, и
+   подложка того же размера просвечивала полоской. Размер задавать явно: у canvas
+   как у замещаемого элемента inset без width/height не растягивает, а сдвигает. */
+.ascii-video__color {
+  position: absolute;
+  inset: 1px;
+  display: block;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+}
+
+.ascii-video__glyphs {
+  position: relative;
+  margin: 0;
+  background: #000;
+  color: #fff;
+  mix-blend-mode: multiply;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  text-transform: none;
+  line-height: 1;
+  white-space: pre;
+  font-variant-ligatures: none;
+  text-rendering: geometricPrecision;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ascii-video__row {
+  display: block;
+}
+
+/* Glyph-matrix на старте: canvas с серой сеткой тех же клеток поверх всего первого
+   экрана; положение, размер и шрифт задаёт AsciiVideo, чтобы клетки совпали с сеткой видео. */
+.ascii-video__matrix {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
 .ascii-flower {
   margin: 0;
   font-family: var(--font-mono);
-  /* Рисунок держится на плотности знака: жир сделал бы все уровни рампы
-     одинаково плотными и смазал бы светотень. Регистр по той же причине не
-     трогаем — это не текст, а сетка символов. */
   font-weight: 400;
   text-transform: none;
   font-size: min(0.68vh, (100vw - var(--pad) * 2) / 52);
@@ -232,125 +297,90 @@ a {
   display: block;
 }
 
-/*
- * Подпись с полем: проявляется, когда цветок дорос. Проявление рисует не
- * переход, а перебор символов в Naming.jsx — здесь только видимость.
- */
-.naming {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 14px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.naming.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Моноширинный и pre — иначе на переборе строка дёргается по ширине,
-   а ведущие пробелы схлопываются и текст ползёт влево. */
-.naming__label,
-.naming__input {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  letter-spacing: 0.1em;
-}
-
-.naming__label {
-  white-space: pre;
-  color: var(--muted);
-}
-
-/* Введённое имя — акцентом: оно становится материалом рисунка */
-.naming__input {
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  caret-color: var(--accent);
-}
-
-.naming__input::placeholder {
-  color: var(--muted);
-  opacity: 0.45;
-}
-
-/* В альбомной ориентации узкого экрана в 100vh не помещаются даже заголовок
-   с подзаголовком — цветку там места нет вовсе, поэтому он убирается. */
 @media (max-width: 899px) and (orientation: landscape) {
-  .hero__flower {
+  .ascii-video {
     display: none;
   }
 }
 
-/* От этой ширины текст и цветок встают в две колонки: в столбик рисунку
-   остаётся слишком мало высоты, и он мельчает до нечитаемого. */
 @media (min-width: 900px) {
   .hero__sticky {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: clamp(24px, 4vw, 72px);
+    justify-content: center;
+    padding: 0 var(--pad);
   }
 
   .hero__content {
     max-width: min(50vw, 640px);
   }
 
-  /* Прежние 9vw заголовка съедали колонку цветка целиком */
   .hero__title {
     font-size: clamp(40px, 5.2vw, 92px);
   }
 
-  .hero__flower {
-    margin-top: 0;
+  .ascii-video {
+    justify-content: center;
+    align-items: center;
+    left: 260px;
+    right: 0;
+    font-size: min(
+      calc(100vw / (var(--cols) * 0.6)),
+      calc(100vh / var(--rows))
+    );
   }
 
   .ascii-flower {
     font-size: min(1.3vh, 0.74vw);
   }
-
-  /* Ширина в процентах от блока цветка: слева от стебля ровно половина
-     рисунка, так строка сама держится в пустом углу под листвой. */
-  .naming {
-    position: absolute;
-    left: 0;
-    bottom: 8%;
-    width: 48%;
-    margin-bottom: 0;
-  }
 }
-
-@keyframes scroll-hint {
-  0%,
-  100% {
-    transform: scaleX(0.35);
-  }
-  50% {
-    transform: scaleX(1);
-  }
-}
-
-/* ---------- О себе ---------- */
 
 .intro {
-  padding: clamp(120px, 18vh, 220px) var(--pad);
+  position: relative;
+  /* Секция прозрачная и выше экрана: под ней на общем холсте (.morph) стекло с
+     пятнами и тёмный блоб, которому нужен ход. Текст в exclusion над белым
+     становится тёмным, над блобом светлым, над пятнами цветным. */
+  /* Ровно один экран: сверху сразу hero, снизу сразу «Работы». Наезд на ход
+     hero: пока страница стекает каплей, текст «О себе» уже входит снизу —
+     иначе после готовой капли остаётся экран пустого стекла. */
+  min-height: calc(100vh + 200px);
+  margin-top: -80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* По 100px воздуха сверху и снизу сверх экрана. */
+  padding: 100px var(--pad);
 }
 
-.intro__kicker {
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 40px;
+/* Холст фигуры: фиксированный, с запасом за краями окна (BLEED в MorphBackdrop),
+   размыт — границы фигуры мягкие везде, где видны. */
+/* Пролёт перед «Работами». Вместе с MERGE_END даёт ход превращения такой же,
+   как у сжатия hero (60vh), но заканчивается он уже на въехавших «Работах». */
+.morph-gate {
+  height: 20vh;
+}
+
+.morph {
+  position: fixed;
+  top: -80px;
+  left: -80px;
+  z-index: -1;
+  display: block;
+  pointer-events: none;
+  filter: blur(26px);
+}
+
+/* Слово неразрывно, буква — отдельный слой для волны появления (Intro.jsx). */
+.intro__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.intro__char {
+  display: inline-block;
+  will-change: color;
 }
 
 .intro__text {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -359,17 +389,20 @@ a {
   letter-spacing: -0.03em;
   font-weight: 500;
   max-width: 22ch;
+  /* Цвет пятен проступает сквозь буквы. */
+  mix-blend-mode: exclusion;
 }
 
-.intro__text span:last-child {
+.intro__text-accent {
   color: var(--accent);
   font-family: var(--font-accent);
 }
 
-/* ---------- Работы ---------- */
-
 .works {
-  padding: clamp(80px, 12vh, 160px) var(--pad);
+  /* Фон прозрачный: страница «Работ» — это разросшаяся капля на холсте
+     MorphBackdrop. Верхний отступ мал, чтобы заголовок вошёл сразу за
+     превращением, а не после экрана пустого чёрного. */
+  padding: clamp(28px, 4vh, 56px) var(--pad) clamp(80px, 12vh, 160px);
 }
 
 .works__head {
@@ -377,7 +410,6 @@ a {
   align-items: baseline;
   justify-content: space-between;
   padding-bottom: 28px;
-  border-bottom: 1px solid var(--line);
   margin-bottom: clamp(40px, 7vh, 80px);
 }
 
@@ -408,19 +440,72 @@ a {
   margin-top: clamp(0px, 10vh, 120px);
 }
 
+.work__link {
+  display: block;
+  color: inherit;
+}
+
 .work__media {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
+  border-radius: 10px;
   background: var(--bg-soft);
 }
 
-/* Внутренний слой выше кадра — его и сдвигаем по прогрессу прохода карточки */
+.work__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  transform: scale(var(--zoom, 1));
+  transform-origin: 50% 40%;
+}
+
+/* Экран проекта, растущий из карточки до размеров окна перед открытием сайта. */
+.work-zoom {
+  position: fixed;
+  z-index: 200;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--bg-soft);
+  transition:
+    top 0.9s cubic-bezier(0.7, 0, 0.2, 1),
+    left 0.9s cubic-bezier(0.7, 0, 0.2, 1),
+    width 0.9s cubic-bezier(0.7, 0, 0.2, 1),
+    height 0.9s cubic-bezier(0.7, 0, 0.2, 1),
+    border-radius 0.9s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.work-zoom img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+
+.work-zoom.is-open {
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0;
+}
+
+.is-zooming {
+  overflow: hidden;
+}
+
 .work__media::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -14% 0;
-  transform: translate3d(0, calc((var(--p, 0.5) - 0.5) * -18%), 0);
+  transform: translate3d(0, calc((var(--p, 0.5) - 0.5) * -18%), 0)
+    scale(var(--zoom, 1));
   will-change: transform;
 }
 
@@ -438,16 +523,6 @@ a {
 
 .work__media--mono::before {
   background: linear-gradient(140deg, #e8e4dc 0%, #6a6a6a 55%, #141414 100%);
-}
-
-.work__index {
-  position: absolute;
-  left: 20px;
-  bottom: 16px;
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.75);
-  mix-blend-mode: difference;
 }
 
 .work__meta {
@@ -476,7 +551,97 @@ a {
   color: var(--muted);
 }
 
-/* ---------- Сцена выгорания ---------- */
+.stack {
+  --n: 3;
+  height: 400vh;
+}
+
+.stack__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--pad);
+  background: var(--bg);
+}
+
+.stack__filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.stack__phrases {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  filter: url("#stack-threshold") blur(0.6px);
+}
+
+.stack__phrase {
+  grid-area: 1 / 1;
+  max-width: 26ch;
+  text-align: center;
+  font-size: clamp(28px, 4.2vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  opacity: 0;
+  will-change: filter, opacity;
+}
+
+.stack__phrase:first-child {
+  opacity: 1;
+}
+
+.stack__cards {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+}
+
+.stack__logo {
+  --d: calc(var(--z) + var(--p, 0) * var(--travel));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(calc(var(--w) * 1px), 30vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  color: var(--brand, var(--text));
+  translate: calc(var(--ox) * 1vw - 50%) calc(var(--oy) * 1vh - 50%)
+    calc(max(var(--d), 20) * -1px);
+  opacity: min(
+    clamp(0, (var(--d) - 20) / 220, 1),
+    clamp(0, (2600 - var(--d)) / 800, 1)
+  );
+  will-change: translate, opacity;
+}
+
+.stack__logo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stack__wordmark {
+  font-size: calc(var(--w) * 0.26px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
 
 .burn {
   height: 320vh;
@@ -492,7 +657,6 @@ a {
   background: radial-gradient(60% 60% at 50% 50%, #1a0f08 0%, var(--bg) 70%);
 }
 
-/* Текст лежит под полотном и открывается по мере того, как оно выгорает */
 .burn__reveal {
   position: relative;
   z-index: 1;
@@ -528,14 +692,12 @@ a {
 
 .burn__canvas {
   position: absolute;
-  inset: 0;
+  top: 0;
   z-index: 2;
   width: 100%;
   height: 100%;
   display: block;
 }
-
-/* ---------- Контакты ---------- */
 
 .contact {
   min-height: 100vh;
@@ -557,7 +719,7 @@ a {
 }
 
 .contact__kicker::before {
-  content: '';
+  content: "";
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -606,9 +768,15 @@ a {
   color: var(--muted);
 }
 
-/* ---------- Адаптив ---------- */
-
 @media (max-width: 760px) {
+  /* На телефонах текст «О себе» упирался в нижнюю границу clamp (26px) и был
+     мелким: здесь он считается от ширины экрана и занимает её целиком. */
+  .intro__text {
+    font-size: clamp(30px, 8.4vw, 42px);
+    line-height: 1.06;
+    max-width: none;
+  }
+
   .works__grid {
     grid-template-columns: 1fr;
   }
@@ -617,20 +785,18 @@ a {
     margin-top: 0;
   }
 
-  .hero {
-    height: 160vh;
-  }
-
   .burn {
     height: 260vh;
+  }
+
+  .stack {
+    height: 320vh;
   }
 
   .header__nav {
     font-size: 13px;
   }
 }
-
-/* ---------- Меньше движения ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
@@ -639,18 +805,55 @@ a {
     transition: none;
   }
 
-  .hero__content,
   .work__media::before {
     transform: none;
     opacity: 1;
   }
 
-  .hero__scroll i {
-    animation: none;
-  }
-
   .burn__reveal {
     opacity: 1;
     transform: none;
+  }
+
+  .stack {
+    height: auto;
+    padding: clamp(80px, 12vh, 160px) var(--pad);
+  }
+
+  .stack__sticky {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .stack__phrases {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+    filter: none;
+  }
+
+  .stack__phrase {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .stack__cards {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .stack__logo {
+    position: static;
+    width: 64px;
+    translate: none;
+    opacity: 1;
   }
 }

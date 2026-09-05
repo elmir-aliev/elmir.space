@@ -3,10 +3,6 @@ import { BurnScene } from '../three/burnScene';
 import { addTrack } from '../scroll/scrollEngine';
 import { useScrollProgress } from '../scroll/useScrollProgress';
 
-/**
- * Длинная sticky-сцена: пока секция залипла, полотно выгорает от центра к краям,
- * а из-под него проступает текст.
- */
 export function BurnSection({ src }) {
   const sectionRef = useRef(null);
   const canvasRef = useRef(null);
@@ -27,7 +23,6 @@ export function BurnSection({ src }) {
     const scene = new BurnScene(canvas, { src, smoothing: reduceMotion ? 1 : 0.12 });
     sceneRef.current = scene;
 
-    // Кадры тратим только пока сцена рядом с экраном
     let visible = false;
     const visibility = new IntersectionObserver(
       ([entry]) => {

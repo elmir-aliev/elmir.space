@@ -1,10 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-/**
- * Появление блока при входе во вьюпорт: вешает на элемент класс `is-in`,
- * дальше всё делает CSS. Дочерние элементы разводятся по времени
- * через переменную --i (см. .reveal в app.css).
- */
 export function useReveal(options = {}) {
   const { threshold = 0.15, rootMargin = '0px 0px -12% 0px', once = true } = options;
   const ref = useRef(null);

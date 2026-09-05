@@ -1,10 +1,5 @@
 import * as THREE from 'three';
 
-/**
- * Рисует «страницу», которая потом сгорает в шейдере.
- * Сделано на canvas, чтобы сцена работала без внешних ассетов —
- * если нужна своя картинка, передайте BurnSection проп `src`.
- */
 export function createPageTexture({ width = 1800, height = 1125 } = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -13,14 +8,11 @@ export function createPageTexture({ width = 1800, height = 1125 } = {}) {
   const ctx = canvas.getContext('2d');
   const pad = width * 0.075;
 
-  const background = ctx.createLinearGradient(0, 0, width, height);
-  background.addColorStop(0, '#141416');
-  background.addColorStop(0.55, '#0d0d0f');
-  background.addColorStop(1, '#17120f');
-  ctx.fillStyle = background;
+  // Фон страницы — ровно фон сайта (--bg): иначе холст читается как более
+  // тёмный (или тёплый) прямоугольник поверх секции.
+  ctx.fillStyle = '#0b0b0d';
   ctx.fillRect(0, 0, width, height);
 
-  // Разметочная сетка
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
   ctx.lineWidth = 1;
   for (let i = 1; i < 6; i += 1) {
@@ -36,7 +28,7 @@ export function createPageTexture({ width = 1800, height = 1125 } = {}) {
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
   ctx.font = `500 ${width * 0.016}px "Inter", system-ui, sans-serif`;
-  ctx.fillText('SELECTED WORK — 2024 / 2026', pad + 28, pad + 62);
+  ctx.fillText('ИЗБРАННЫЕ РАБОТЫ — 2024 / 2026', pad + 28, pad + 62);
 
   ctx.fillStyle = '#f5f2ec';
   ctx.font = `700 ${width * 0.115}px "Inter", system-ui, sans-serif`;
@@ -46,9 +38,8 @@ export function createPageTexture({ width = 1800, height = 1125 } = {}) {
   ctx.font = `400 ${width * 0.022}px "Inter", system-ui, sans-serif`;
   ctx.fillText('Фронтенд, интерфейсы и графика в вебе', pad + 28, height * 0.5);
 
-  // Ряд карточек-плейсхолдеров
   const cardTop = height * 0.6;
-  const cardHeight = height * 0.24;
+  const cardHeight = width * 0.15;
   const gap = width * 0.025;
   const cardWidth = (width - pad * 2 - gap * 2) / 3;
 
