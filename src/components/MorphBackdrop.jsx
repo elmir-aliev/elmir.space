@@ -29,59 +29,6 @@ const BLEED = 80;
 const PAPER = "#f3f0ea";
 const INK = "#0b0b0d";
 
-// Где сейчас тёмное. Нужно «О себе»: его буквы набраны цветом тёмного фона, и
-// те, что попали на фигуру, перекрашиваются в светлый — иначе они слились бы
-// с ней.
-//
-// Читается сам холст, а не прикидка по геометрии: на разрастании перед
-// «Работами» фигура давно не круг, и радиус блоба с нарисованным расходится —
-// буквы белели прямо на бумаге. Холст бимодальный (лист либо фигура), середины
-// на нём нет, поэтому решение по пикселю точное.
-//
-// getImageData — чтение с холста, и на весь кадр оно дорогое: полный снимок
-// ронял каждый четвёртый кадр при замедлении вчетверо. Поэтому снимается только
-// прямоугольник под текстом, один раз за кадр, и лишь пока секция на экране.
-const backdrop = {
-  ctx: null,
-  k: 1,
-  w: 0,
-  h: 0,
-  data: null,
-  x0: 0,
-  y0: 0,
-  rw: 0,
-  rh: 0,
-};
-
-// Снять область под текстом. Координаты — оконные, как у getBoundingClientRect.
-export function prepareInk(left, top, width, height) {
-  const b = backdrop;
-  b.data = null;
-  if (!b.ctx || width <= 0 || height <= 0) return;
-
-  const x0 = Math.max(0, Math.floor((left + BLEED) * b.k));
-  const y0 = Math.max(0, Math.floor((top + BLEED) * b.k));
-  const x1 = Math.min(b.w, Math.ceil((left + width + BLEED) * b.k));
-  const y1 = Math.min(b.h, Math.ceil((top + height + BLEED) * b.k));
-  if (x1 <= x0 || y1 <= y0) return;
-
-  b.x0 = x0;
-  b.y0 = y0;
-  b.rw = x1 - x0;
-  b.rh = y1 - y0;
-  b.data = b.ctx.getImageData(x0, y0, b.rw, b.rh).data;
-}
-
-// Тёмная ли фигура под точкой. Работает по снимку от prepareInk.
-export function overInk(x, y) {
-  const b = backdrop;
-  if (!b.data) return false;
-  const px = Math.round((x + BLEED) * b.k) - b.x0;
-  const py = Math.round((y + BLEED) * b.k) - b.y0;
-  if (px < 0 || py < 0 || px >= b.rw || py >= b.rh) return false;
-  return b.data[(py * b.rw + px) * 4] < 128;
-}
-
 // Радиус блоба — доля меньшей стороны окна.
 const BLOB_RADIUS = 0.21;
 // Где блоб висит, когда курсора нет: доли окна; за время стекла сползает на
@@ -146,10 +93,7 @@ export function MorphBackdrop() {
     if (!canvas || !hero || !heroInner || !about || !gate || !works)
       return undefined;
 
-    // Холст читают каждый кадр (overInk для «О себе»), поэтому браузеру сразу
-    // сказано о частом чтении — без этого Chrome ругается в консоль. На замере
-    // разницы по кадрам нет, флаг здесь ради корректности и тишины в консоли.
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const ctx = canvas.getContext("2d");
     let W = 0;
     let V = 0;
     let k = 1;
@@ -181,13 +125,6 @@ export function MorphBackdrop() {
     const outline = new Array(POINTS * 3);
     const pointer = { x: 0, y: 0, on: false };
     const start = performance.now();
-
-    const markDrawn = () => {
-      backdrop.ctx = ctx;
-      backdrop.k = k;
-      backdrop.w = canvas.width;
-      backdrop.h = canvas.height;
-    };
 
     const resize = () => {
       W = window.innerWidth;
@@ -312,7 +249,6 @@ export function MorphBackdrop() {
           ctx.fillRect(-BLEED, -BLEED, W + BLEED * 2, V + BLEED * 2);
           lastMode = mode;
         }
-        markDrawn();
         return;
       }
       lastMode = "";
@@ -370,8 +306,6 @@ export function MorphBackdrop() {
       } else {
         setHero(q >= 1 ? SCROLL_PART * travel : 0, 1, q >= 1 ? 0 : 1, bx, by);
       }
-
-      markDrawn();
     };
 
     resize();
@@ -389,8 +323,6 @@ export function MorphBackdrop() {
     draw(performance.now());
 
     return () => {
-      backdrop.ctx = null;
-      backdrop.data = null;
       removeTrack();
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);

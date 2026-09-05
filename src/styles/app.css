@@ -387,17 +387,19 @@ a {
   font-size: clamp(26px, 4.4vw, 62px);
   line-height: 1.1;
   letter-spacing: -0.03em;
-  font-weight: 500;
   max-width: 22ch;
-  /* Был mix-blend-mode: exclusion — он делал букву тёмной над светлым листом и
-     светлой над тёмным блобом. По просьбе текст сплошной чёрный, поэтому бленд
-     снят: под ним чёрный над бумагой рисовался бы почти белым. */
-  color: #000;
-  font-family: var(--font);
+  /* Набрано как акцент в hero: Nyght Serif, курсив, акцентный красный. Вес 400
+     и курсив обязательны — @font-face объявляет ровно одно лицо, и любой другой
+     запрос уходит в запасную Georgia, уже прямую. Бленда здесь нет (был
+     exclusion), цвет один на весь блок. */
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
 }
 
 .intro__text-accent {
-  /* Весь блок «О себе» набран одинаково: чёрным и тем же Inter. */
+  /* Весь блок «О себе» набран одинаково — строка больше ничем не выделяется. */
   color: inherit;
   font-family: inherit;
 }
@@ -765,9 +767,13 @@ a {
 .contact__title span {
   color: var(--accent);
   font-family: var(--font-accent);
+  /* Nyght Serif объявлен единственным лицом: курсив, вес 400. Без этих двух
+     строк запрос не находил его вовсе и уходил в запасную Georgia — слово
+     выходило прямым, тогда как в hero тот же акцент курсивный. */
+  font-style: italic;
+  font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.03em;
-  font-weight: 500;
   max-width: 22ch;
 }
 

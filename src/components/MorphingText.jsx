@@ -29,12 +29,34 @@ const COOLDOWN_TIME = 0.5;
 // масштабируется кеглем — за единицу взят десктопный, где эффект настроен.
 const BASE_FONT = 64;
 
+// Потолок размытия. У MagicUI радиус доходит до 100px, но порог feColorMatrix
+// съедает фразу подчистую уже около 26px — всё, что выше, считается впустую, а
+// стоит дорого: радиус меняется каждый кадр прокрутки, и кэшировать слой
+// браузеру нечего. Выше потолка фильтр снимается совсем, вместе с прозрачностью.
+const MAX_BLUR = 26;
+// Радиус округляется до половины пикселя: соседние кадры чаще совпадают, и
+// браузер переиспользует уже отрисованный слой вместо полного пересчёта.
+const BLUR_STEP = 0.5;
+
 // На отрезке между соседними фразами морф идёт с 25% до 75% хода, остальное —
 // удержание: иначе текст не успевает читаться.
 const MORPH_START = 0.25;
 const MORPH_END = 0.75;
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+// fraction — насколько строка «проявлена»: 1 — целая, 0 — её нет.
+function apply(el, fraction, scale) {
+  const blur = fraction > 0 ? (8 / fraction - 8) * scale : Infinity;
+  if (blur > MAX_BLUR * scale) {
+    // Порог всё равно ничего не оставит — не тратим кадр на размытие.
+    el.style.filter = 'none';
+    el.style.opacity = '0';
+    return;
+  }
+  el.style.filter = `blur(${(Math.round(blur / BLUR_STEP) * BLUR_STEP).toFixed(1)}px)`;
+  el.style.opacity = `${(Math.pow(fraction, 0.4) * 100).toFixed(1)}%`;
+}
 
 function smoothstep(a, b, x) {
   const t = clamp01((x - a) / (b - a));
@@ -75,12 +97,8 @@ export const MorphingText = forwardRef(function MorphingText(
       if (!first || !second) return;
 
       const k = scaleRef.current;
-      second.style.filter = `blur(${Math.min(8 / fraction - 8, 100) * k}px)`;
-      second.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
-
-      const inverted = 1 - fraction;
-      first.style.filter = `blur(${Math.min(8 / inverted - 8, 100) * k}px)`;
-      first.style.opacity = `${Math.pow(inverted, 0.4) * 100}%`;
+      apply(second, fraction, k);
+      apply(first, 1 - fraction, k);
 
       first.textContent = texts[index % texts.length];
       second.textContent = texts[(index + 1) % texts.length];
