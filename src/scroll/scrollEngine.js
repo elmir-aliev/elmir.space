@@ -6,10 +6,6 @@ let lenis = null;
 let frameId = 0;
 let users = 0;
 
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function frame(time) {
   lenis?.raf(time);
 
@@ -23,17 +19,15 @@ export function startScrollEngine(options = {}) {
   users += 1;
 
   if (users === 1) {
-    if (!prefersReducedMotion()) {
-      lenis = new Lenis({
-        duration: 1.1,
-        easing: (t) => 1 - Math.pow(1 - t, 4),
-        touchMultiplier: 1.4,
-        ...options,
-      });
-      // Для проверок в playwright: window.scrollTo Lenis доводит инерцией,
-      // точную позицию даёт только lenis.scrollTo(y, { immediate: true }).
-      if (import.meta.env.DEV) window.__lenis = lenis;
-    }
+    lenis = new Lenis({
+      duration: 1.1,
+      easing: (t) => 1 - Math.pow(1 - t, 4),
+      touchMultiplier: 1.4,
+      ...options,
+    });
+    // Для проверок в playwright: window.scrollTo Lenis доводит инерцией,
+    // точную позицию даёт только lenis.scrollTo(y, { immediate: true }).
+    if (import.meta.env.DEV) window.__lenis = lenis;
     frameId = requestAnimationFrame(frame);
   }
 
@@ -65,7 +59,5 @@ export function scrollTo(target, options = {}) {
 
   const node =
     typeof target === "string" ? document.querySelector(target) : target;
-  node?.scrollIntoView({
-    behavior: prefersReducedMotion() ? "auto" : "smooth",
-  });
+  node?.scrollIntoView({ behavior: "smooth" });
 }

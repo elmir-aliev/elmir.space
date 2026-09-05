@@ -136,9 +136,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const tint = colorCtx.createImageData(aCols, aRows);
     const tintData = tint.data;
 
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
     const aSize = aCols * aRows;
     const sharp = new Float32Array(aSize);
     const lum = new Float32Array(aSize);
@@ -625,25 +622,17 @@ export function AsciiVideo({ paused = false, onSettled }) {
 
     const startLoop = () => {
       video.playbackRate = SPEED;
-      if (reduced) {
-        analyze();
-        compose(2);
-        finish();
-        return;
-      }
       video.play().catch(() => {});
       const wait = Math.max(0, MATRIX_HOLD - (performance.now() - mounted));
       timer = window.setTimeout(dissolve, wait);
     };
 
-    if (!reduced) {
-      matrix.hidden = false;
-      buildMatrix();
-      ticker = window.setInterval(() => {
-        if (phase !== "play") mutate();
-      }, MATRIX_TICK);
-      window.addEventListener("resize", buildMatrix);
-    }
+    matrix.hidden = false;
+    buildMatrix();
+    ticker = window.setInterval(() => {
+      if (phase !== "play") mutate();
+    }, MATRIX_TICK);
+    window.addEventListener("resize", buildMatrix);
 
     if (video.readyState >= 2) startLoop();
     else video.addEventListener("loadeddata", startLoop);

@@ -70,11 +70,6 @@ export function AsciiFlower({ ramp = '', onSettled }) {
     const cells = rows.map((row) => Array.from(row.querySelectorAll('[data-glyph]')));
     const finals = cells.map((row) => row.map((cell) => cell.textContent));
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      settledRef.current?.();
-      return undefined;
-    }
-
     const height = rows.length;
     const state = new Array(height).fill(HIDDEN);
     rows.forEach((row) => {

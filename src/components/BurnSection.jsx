@@ -19,8 +19,7 @@ export function BurnSection({ src }) {
     const section = sectionRef.current;
     if (!canvas || !section) return undefined;
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const scene = new BurnScene(canvas, { src, smoothing: reduceMotion ? 1 : 0.12 });
+    const scene = new BurnScene(canvas, { src, smoothing: 0.12 });
     sceneRef.current = scene;
 
     let visible = false;

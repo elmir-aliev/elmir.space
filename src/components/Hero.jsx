@@ -24,8 +24,6 @@ export function Hero() {
   useScrollProgress(ref, { mode: 'through', varName: null, onChange: handleProgress });
 
   useLayoutEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return undefined;
     const targets = contentRef.current.querySelectorAll('.hero__kicker, .hero__line');
     gsap.set(targets, { opacity: 0 });
     document.documentElement.classList.add(MATRIX_CLASS);
@@ -38,8 +36,6 @@ export function Hero() {
   const reveal = useCallback(() => {
     const content = contentRef.current;
     if (!content) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
     const kicker = content.querySelector('.hero__kicker');
     const lines = content.querySelectorAll('.hero__line');
     // Размытие крупного текста дорого для телефона — там только сдвиг и прозрачность.

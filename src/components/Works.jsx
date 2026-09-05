@@ -74,11 +74,6 @@ function revealWorks(section) {
 
 // Экран проекта из карточки растёт до размеров окна, затем открывается сайт.
 function zoomInto(frame, work) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    window.location.assign(work.url);
-    return;
-  }
-
   const rect = frame.getBoundingClientRect();
   const overlay = document.createElement('div');
   overlay.className = 'work-zoom';
@@ -144,7 +139,6 @@ export function Works() {
   const ref = useRef(null);
 
   useLayoutEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const ctx = gsap.context(() => revealWorks(ref.current), ref);
     return () => ctx.revert();
   }, []);
