@@ -389,13 +389,17 @@ a {
   letter-spacing: -0.03em;
   font-weight: 500;
   max-width: 22ch;
-  /* Цвет пятен проступает сквозь буквы. */
-  mix-blend-mode: exclusion;
+  /* Был mix-blend-mode: exclusion — он делал букву тёмной над светлым листом и
+     светлой над тёмным блобом. По просьбе текст сплошной чёрный, поэтому бленд
+     снят: под ним чёрный над бумагой рисовался бы почти белым. */
+  color: #000;
+  font-family: var(--font);
 }
 
 .intro__text-accent {
-  color: var(--accent);
-  font-family: var(--font-accent);
+  /* Весь блок «О себе» набран одинаково: чёрным и тем же Inter. */
+  color: inherit;
+  font-family: inherit;
 }
 
 .works {
@@ -567,34 +571,59 @@ a {
   background: var(--bg);
 }
 
-.stack__filter {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
-.stack__phrases {
+/* Стили компонента MorphingText — перевод Tailwind-классов MagicUI:
+   relative mx-auto w-full max-w-3xl text-center leading-none font-bold
+   filter-[url(#threshold)_blur(0.6px)].
+   Жирность 700 и крупный кегль здесь не косметика: порог feColorMatrix
+   срезает всё, что тоньше его среза, и на прежних 28px/500 буквы исчезали на
+   стыке целиком — морфа не было ни в Safari, ни в Chrome на телефоне.
+   Кегли предельные по замеру: у MagicUI фразы в одно слово и в одну строку, а
+   здесь длинные — на 390px строка упирается в край уже на 48px. Высота блока
+   задана явно, потому что строки лежат абсолютно и своей высоты не дают. */
+.morphing-text {
   position: relative;
   z-index: 2;
-  display: grid;
-  place-items: center;
-  filter: url("#stack-threshold") blur(0.6px);
-}
-
-.stack__phrase {
-  grid-area: 1 / 1;
-  max-width: 26ch;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 48rem;
   text-align: center;
-  font-size: clamp(28px, 4.2vw, 60px);
-  line-height: 1.05;
+  line-height: 1;
+  font-weight: 700;
   letter-spacing: -0.03em;
-  font-weight: 500;
-  opacity: 0;
-  will-change: filter, opacity;
+  filter: url("#morphing-threshold") blur(0.6px);
+  font-size: 44px;
+  height: 230px;
 }
 
-.stack__phrase:first-child {
-  opacity: 1;
+@media (min-width: 768px) {
+  .morphing-text {
+    font-size: 56px;
+    height: 200px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .morphing-text {
+    font-size: 64px;
+    height: 200px;
+  }
+}
+
+/* Строки лежат друг на друге и центрируются по вертикали: фраза переносится,
+   и выравнивание по верхнему краю (как в оригинале) их бы рассогласовало. */
+.morphing-text__line {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.morphing-text__filter {
+  position: fixed;
+  width: 0;
+  height: 0;
 }
 
 .stack__cards {
@@ -769,16 +798,6 @@ a {
 }
 
 @media (max-width: 760px) {
-  /* Текст «О себе» идёт в mix-blend-mode: exclusion: над белым он тёмный, над
-     чёрным светлый. Оба края контрастны (4.7:1 и 12.3:1), но ровно на середине
-     яркости контраст обнуляется — T(1-2b)=0, и это не зависит от цвета буквы.
-     Середину создаёт размытие границы блоба: 26px на телефоне шире буквы, и
-     строка пропадала целиком. Здесь кайма узкая — она проходит по букве тонким
-     краем, как тень, и текст читается на всём ходу. */
-  .morph {
-    filter: blur(7px);
-  }
-
   /* На телефонах текст «О себе» упирался в нижнюю границу clamp (26px) и был
      мелким: здесь он считается от ширины экрана и занимает её целиком. */
   .intro__text {

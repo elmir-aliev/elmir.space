@@ -1,11 +1,12 @@
 import { useCallback, useRef } from 'react';
 import { useScrollProgress } from '../scroll/useScrollProgress';
 import { stackIcons } from '../assets/stackIcons';
+import { MorphingText } from './MorphingText';
 
 const phrases = [
-  ['Собираю интерфейсы', 'из проверенного стека'],
-  ['От мобильных приложений,', 'до целых систем'],
-  ['Каждый инструмент здесь', 'заработал своё место'],
+  'Собираю интерфейсы из проверенного стека',
+  'От мобильных приложений, до целых систем',
+  'Каждый инструмент здесь заработал своё место',
 ];
 
 /*
@@ -41,51 +42,21 @@ function Logo({ name }) {
   );
 }
 
-/*
- * Смена фраз — как Morphing Text у MagicUI: две фразы лежат друг на друге, у уходящей
- * растёт размытие и падает прозрачность, у приходящей наоборот, а SVG-фильтр
- * с порогом по альфе снова делает края резкими — буквы будто перетекают.
- * Здесь доля перехода берётся не от таймера, а от прогресса прокрутки: между
- * соседними фразами морф идёт на 25–75% отрезка, остальное — удержание.
- */
-const MORPH_START = 0.25;
-const MORPH_END = 0.75;
-
-function smoothstep(a, b, x) {
-  const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
-  return t * t * (3 - 2 * t);
-}
-
-function morphStyle(element, fraction) {
-  if (fraction <= 0) {
-    element.style.opacity = '0';
-    element.style.filter = 'blur(100px)';
-    return;
-  }
-  element.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-  element.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
-}
-
 export function Stack() {
   const ref = useRef(null);
-  const phraseRefs = useRef([]);
+  const morphRef = useRef(null);
 
+  // Фразы ведёт прокрутка секции, а не таймер компонента: onChange вызывается
+  // из цикла скролл-движка, поэтому второго тикера не появляется.
   const handleProgress = useCallback((progress) => {
-    const nodes = phraseRefs.current;
-    const spans = nodes.length - 1;
-    const scaled = progress * spans;
-    const segment = Math.min(Math.floor(scaled), Math.max(spans - 1, 0));
-    const t = spans ? smoothstep(MORPH_START, MORPH_END, scaled - segment) : 0;
-
-    nodes.forEach((node, index) => {
-      if (!node) return;
-      if (index === segment) morphStyle(node, 1 - t);
-      else if (index === segment + 1) morphStyle(node, t);
-      else morphStyle(node, 0);
-    });
+    morphRef.current?.setProgress(progress);
   }, []);
 
-  useScrollProgress(ref, { mode: 'pinned', varName: '--p', onChange: handleProgress });
+  useScrollProgress(ref, {
+    mode: 'pinned',
+    varName: '--p',
+    onChange: handleProgress,
+  });
 
   return (
     <section
@@ -95,33 +66,12 @@ export function Stack() {
       style={{ '--n': phrases.length, '--travel': TRAVEL }}
     >
       <div className="stack__sticky">
-        <svg className="stack__filter" aria-hidden="true">
-          <defs>
-            <filter id="stack-threshold">
-              <feColorMatrix
-                in="SourceGraphic"
-                type="matrix"
-                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
-              />
-            </filter>
-          </defs>
-        </svg>
-
-        <div className="stack__phrases">
-          {phrases.map(([head, tail], index) => (
-            <h2
-              key={head}
-              ref={(node) => {
-                phraseRefs.current[index] = node;
-              }}
-              className="stack__phrase"
-            >
-              {head}
-              <br />
-              {tail}
-            </h2>
-          ))}
-        </div>
+        <MorphingText
+          ref={morphRef}
+          texts={phrases}
+          autoplay={false}
+          className="stack__morph"
+        />
 
         <ul className="stack__cards" aria-label="Библиотеки и инструменты">
           {tools.map((tool) => (
