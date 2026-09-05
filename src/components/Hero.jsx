@@ -66,9 +66,8 @@ export function Hero() {
         <AsciiVideo paused={gone} onSettled={reveal} />
 
         <div className="hero__content" ref={contentRef}>
-          <p className="hero__kicker">Фронтенд-разработчик — Санкт-Петербург</p>
           <h1 className="hero__title">
-            <span className="hero__line">Приложения,</span>
+            <span className="hero__line">Создаю приложения,</span>
             <span className="hero__line">которые</span>
             <em className="hero__line">
               <span className="hero__title-pull">можно</span> полюбить
