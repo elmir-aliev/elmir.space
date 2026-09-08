@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createRoot } from "@react-three/fiber";
 import gsap from "gsap";
 import videoSrc from "../assets/hero-loop.mp4";
+import { AsciiFilm } from "./AsciiFilm";
 
 const COLS_WIDE = 300;
 const COLS_NARROW = 150;
@@ -13,6 +15,8 @@ const ANALYSIS_COLS = COLS_WIDE;
 
 const ROW_RATIO = (704 / 1248) * 0.6;
 
+const ANALYSIS_ROWS = Math.round(ANALYSIS_COLS * ROW_RATIO);
+
 const DENSITY_RAMP = " .,:;=+*oO#%@";
 
 const SPEED = 0.5;
@@ -20,15 +24,6 @@ const FPS = 24;
 
 const LUM_LOW = 30;
 const LUM_HIGH = 236;
-
-// Цветовая подложка — не сам <video> с CSS-фильтром, а холст в сетке разбора с тем же
-// кадром, где насыщенность и подъём чёрной точки посчитаны в JS. На телефонах
-// фильтр поверх видео шёл по медленному пути и картинка подлагивала.
-const SATURATE = 1.35;
-const LIFT = 0.48;
-
-const SHARPEN = 1.1;
-const BLUR_RADIUS = 4;
 
 const KEY_STEP = 22;
 const KEY_CLEANUP = 2;
@@ -65,10 +60,6 @@ const DISSOLVE = 1.8;
 const DISSOLVE_NOISE = 0.55;
 const SCRAMBLE = 0.1;
 
-function clamp(value, limit) {
-  return value < 0 ? 0 : value >= limit ? limit - 1 : value;
-}
-
 const WIDE = "(min-width: 900px)";
 
 function useColumns() {
@@ -92,10 +83,20 @@ function useColumns() {
 export function AsciiVideo({ paused = false, onSettled }) {
   const rootRef = useRef(null);
   const videoRef = useRef(null);
-  const preRef = useRef(null);
   const colorRef = useRef(null);
+  const preRef = useRef(null);
   const matrixRef = useRef(null);
+  const filmRef = useRef(null);
   const settledRef = useRef(onSettled);
+
+  // Видео держится и в ref, и в состоянии: ref — чтобы им управлял цикл,
+  // состояние — чтобы сцена AsciiFilm смонтировалась уже после элемента,
+  // который получает пропом.
+  const [mounted, setMounted] = useState(null);
+  const attachVideo = useCallback((node) => {
+    videoRef.current = node;
+    setMounted(node);
+  }, []);
 
   const cols = useColumns();
   const rows = Math.round(cols * ROW_RATIO);
@@ -106,13 +107,14 @@ export function AsciiVideo({ paused = false, onSettled }) {
     settledRef.current = onSettled;
   }, [onSettled]);
 
+
+
   useEffect(() => {
     const root = rootRef.current;
     const video = videoRef.current;
     const pre = preRef.current;
-    const color = colorRef.current;
     const matrix = matrixRef.current;
-    if (!root || !video || !pre || !color || !matrix) return undefined;
+    if (!root || !video || !pre || !matrix) return undefined;
 
     const lines = Array.from(pre.children);
     const blank = " ".repeat(cols);
@@ -122,25 +124,12 @@ export function AsciiVideo({ paused = false, onSettled }) {
     });
 
     const aCols = ANALYSIS_COLS;
-    const aRows = Math.round(aCols * ROW_RATIO);
-    const canvas = document.createElement("canvas");
-    canvas.width = aCols;
-    canvas.height = aRows;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-
-    color.width = aCols;
-    color.height = aRows;
-    const colorCtx = color.getContext("2d");
-    const tint = colorCtx.createImageData(aCols, aRows);
-    const tintData = tint.data;
-
+    const aRows = ANALYSIS_ROWS;
     const aSize = aCols * aRows;
-    const sharp = new Float32Array(aSize);
-    const lum = new Float32Array(aSize);
-    const pass = new Float32Array(aSize);
-    const blur = new Float32Array(aSize);
+
+    // Разобранный кадр приезжает с GPU: RGB — цвет для ключевания,
+    // альфа — резкость, из неё берётся плотность знака.
+    let pixels = null;
 
     const back = new Uint8Array(aSize);
     const settled = new Uint8Array(aSize);
@@ -156,35 +145,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const cells = new Array(cols);
     const drop = new Float32Array(cols * rows);
     let frame = 0;
-
-    const boxBlur = () => {
-      const span = BLUR_RADIUS * 2 + 1;
-
-      for (let y = 0; y < aRows; y += 1) {
-        const row = y * aCols;
-        let sum = 0;
-        for (let x = -BLUR_RADIUS; x <= BLUR_RADIUS; x += 1)
-          sum += lum[row + clamp(x, aCols)];
-        for (let x = 0; x < aCols; x += 1) {
-          pass[row + x] = sum / span;
-          sum +=
-            lum[row + clamp(x + BLUR_RADIUS + 1, aCols)] -
-            lum[row + clamp(x - BLUR_RADIUS, aCols)];
-        }
-      }
-
-      for (let x = 0; x < aCols; x += 1) {
-        let sum = 0;
-        for (let y = -BLUR_RADIUS; y <= BLUR_RADIUS; y += 1)
-          sum += pass[clamp(y, aRows) * aCols + x];
-        for (let y = 0; y < aRows; y += 1) {
-          blur[y * aCols + x] = sum / span;
-          sum +=
-            pass[clamp(y + BLUR_RADIUS + 1, aRows) * aCols + x] -
-            pass[clamp(y - BLUR_RADIUS, aRows) * aCols + x];
-        }
-      }
-    };
 
     const ease = () => {
       if (!primed) {
@@ -353,26 +313,15 @@ export function AsciiVideo({ paused = false, onSettled }) {
       ease();
     };
 
-    // Свежий кадр видео: светлота, unsharp и маска фона.
+    // Свежий кадр: даунскейл, светлота, unsharp и цветовая подложка считаются
+    // на GPU (см. AsciiFilm), сюда возвращается готовый буфер сетки разбора,
+    // и на CPU остаётся только маска фона.
     const analyze = () => {
-      ctx.drawImage(video, 0, 0, aCols, aRows);
-      const { data } = ctx.getImageData(0, 0, aCols, aRows);
-      for (let i = 0, p = 0; i < aSize; i += 1, p += 4) {
-        const gray =
-          0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2];
-        lum[i] = gray;
-        for (let c = 0; c < 3; c += 1) {
-          const sat = gray + (data[p + c] - gray) * SATURATE;
-          const clipped = sat < 0 ? 0 : sat > 255 ? 255 : sat;
-          tintData[p + c] = LIFT * 255 + (1 - LIFT) * clipped;
-        }
-        tintData[p + 3] = 255;
-      }
-      colorCtx.putImageData(tint, 0, 0);
-      boxBlur();
+      const data = filmRef.current?.analyze();
+      if (!data) return false;
+      pixels = data;
       keyOut(data);
-      for (let i = 0; i < aSize; i += 1)
-        sharp[i] = lum[i] + SHARPEN * (lum[i] - blur[i]);
+      return true;
     };
 
     // Сборка строк по разобранному кадру. t — прогресс растворения матрицы:
@@ -391,6 +340,10 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const [y0, y1] = span(rows, aRows);
 
     const compose = (t) => {
+      // Кадра может ещё не быть: первый асинхронный readback приходит на разбор
+      // позже, а растворение к этому моменту уже могло закончиться.
+      if (!pixels) return;
+
       const chars = DENSITY_RAMP;
       const last = chars.length - 1;
       const floor = chars[0] === " " ? 1 : 0;
@@ -414,7 +367,7 @@ export function AsciiVideo({ paused = false, onSettled }) {
             for (let ax = x0[x]; ax < x1[x]; ax += 1) {
               const a = ay * aCols + ax;
               hidden += back[a];
-              sum += sharp[a];
+              sum += pixels[(a << 2) + 3];
               total += 1;
             }
           }
@@ -442,7 +395,8 @@ export function AsciiVideo({ paused = false, onSettled }) {
     // Её сетка совмещена с сеткой видео: клетка (x, y) кадра — это клетка
     // (x + kx, y + ky) матрицы, поэтому знак гаснет ровно там, где вспыхивает.
     // Рисуется по клеткам: полная отрисовка один раз, дальше только мутации
-    // (перерисовать клетку) и растворение (стереть клетку).
+    // (перерисовать клетку) и растворение (стереть клетку). Живёт около трёх
+    // секунд от загрузки, поэтому и остаётся на 2d-холсте.
     const mctx = matrix.getContext("2d");
     let mCols = 0;
     let mRows = 0;
@@ -579,7 +533,7 @@ export function AsciiVideo({ paused = false, onSettled }) {
     let ticker = 0;
     let tween = null;
     let timer = 0;
-    const mounted = performance.now();
+    const startedAt = performance.now();
 
     const finish = () => {
       phase = "play";
@@ -592,11 +546,10 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const loop = () => {
       frame = requestAnimationFrame(loop);
       const current = (video.currentTime * FPS) | 0;
-      const fresh = current !== drawnFrame;
-      if (fresh) {
-        drawnFrame = current;
-        analyze();
-      }
+      // Кадр считается разобранным только если сцена уже смонтирована:
+      // <Canvas> поднимается своим корнем и готов на кадр-другой позже.
+      const fresh = current !== drawnFrame && analyze();
+      if (fresh) drawnFrame = current;
       if (phase === "dissolve") {
         if (drawnFrame < 0) return;
         compose(state.t);
@@ -623,7 +576,7 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const startLoop = () => {
       video.playbackRate = SPEED;
       video.play().catch(() => {});
-      const wait = Math.max(0, MATRIX_HOLD - (performance.now() - mounted));
+      const wait = Math.max(0, MATRIX_HOLD - (performance.now() - startedAt));
       timer = window.setTimeout(dissolve, wait);
     };
 
@@ -645,14 +598,92 @@ export function AsciiVideo({ paused = false, onSettled }) {
       window.removeEventListener("resize", buildMatrix);
       video.removeEventListener("loadeddata", startLoop);
     };
-  }, [cols, rows]);
+  }, [cols, rows, mounted]);
+
+// Корень R3F поднимается вручную через createRoot, а не через <Canvas>:
+  // <Canvas> ради JSX-каталога делает extend(THREE) и тянет в сборку весь
+  // three целиком (+57 кБ gzip на замере 07.09.2026). Здесь вся сцена — один
+  // <primitive>, каталог не нужен, и three остаётся оттрясённым.
+  //
+  // Размер холста задаёт кадр, а его ширину — заполненный <pre>, поэтому
+  // сцена поднимается не сразу, а по первому ненулевому размеру от наблюдателя.
+  useEffect(() => {
+    const holder = colorRef.current;
+    const video = videoRef.current;
+    if (!holder || !video) return undefined;
+
+    // Холст свой на каждый подъём корня: контекст WebGL у холста один, и в
+    // StrictMode второй корень занял бы контекст первого, а отложенная на
+    // полсекунды уборка первого его бы и погасила.
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "display:block;width:100%;height:100%";
+    holder.appendChild(canvas);
+
+    const root = createRoot(canvas);
+    let cancelled = false;
+    let started = false;
+    let applied = "";
+    let queue = Promise.resolve();
+
+    const sync = () => {
+      const rect = holder.getBoundingClientRect();
+      const key = `${rect.width}x${rect.height}`;
+      if (!rect.width || !rect.height || key === applied) return;
+      applied = key;
+
+      const size = { width: rect.width, height: rect.height, top: 0, left: 0 };
+      queue = queue.then(async () => {
+        if (cancelled) return;
+        await root.configure(
+          started
+            ? { size }
+            : {
+                frameloop: "never",
+                dpr: 1,
+                flat: true,
+                linear: true,
+                size,
+                gl: {
+                  alpha: false,
+                  antialias: false,
+                  depth: false,
+                  stencil: false,
+                  powerPreference: "high-performance",
+                },
+              },
+        );
+        if (cancelled || started) return;
+        started = true;
+        root.render(
+          <AsciiFilm
+            video={video}
+            cols={ANALYSIS_COLS}
+            rows={ANALYSIS_ROWS}
+            filmRef={filmRef}
+          />,
+        );
+      });
+    };
+
+    const observer = new ResizeObserver(sync);
+    observer.observe(holder);
+    sync();
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+      filmRef.current = null;
+      root.unmount();
+      canvas.remove();
+    };
+  }, [mounted]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     if (paused) video.pause();
     else video.play().catch(() => {});
-  }, [paused]);
+  }, [paused, mounted]);
 
   return (
     <div
@@ -664,7 +695,7 @@ export function AsciiVideo({ paused = false, onSettled }) {
       <div className="ascii-video__frame">
         <video
           className="ascii-video__source"
-          ref={videoRef}
+          ref={attachVideo}
           src={videoSrc}
           muted
           loop
@@ -672,7 +703,7 @@ export function AsciiVideo({ paused = false, onSettled }) {
           autoPlay
           preload="auto"
         />
-        <canvas className="ascii-video__color" ref={colorRef} />
+        <div className="ascii-video__color" ref={colorRef} />
         <pre className="ascii-video__glyphs" ref={preRef}>
           {keys.map((y) => (
             <span className="ascii-video__row" key={y} />

@@ -7,6 +7,7 @@
   --muted: rgba(243, 240, 234, 0.55);
   --line: rgba(243, 240, 234, 0.14);
   --accent: #b5292b;
+  --paper: #f3f0ea;
 
   --font:
     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
@@ -140,29 +141,23 @@ a {
 }
 
 .hero {
-  /* Лишняя высота сверх экрана — ход hero: он стоит на месте, гаснет и стекает
-     каплей (MorphBackdrop двигает .hero__sticky opacity). 60vh — столько нужно
-     самому превращению; «О себе» начинается сразу за ним, без пустого стекла. */
-  height: 160vh;
+  height: 100dvh;
 }
 
 .hero__sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  /* Поверх наехавшего снизу «О себе», пока hero не погас. */
-  z-index: 1;
-  will-change: transform, opacity;
+  position: relative;
+  /* dvh, а не vh: на iOS 100vh — это высота с убранной адресной строкой, и пока
+     она показана, экран был бы выше видимой части. */
+  height: 100dvh;
   /* Фон обязан быть непрозрачным: ASCII-человек смешивается с ним режимом
      screen; над прозрачным фоном чёрная подложка кадра рисовалась как есть —
-     полоса другого оттенка слева и жёсткий прямоугольник при сжатии.
-     Сжатие в каплю делает clip-path от MorphBackdrop, а не прозрачность. */
+     полоса другого оттенка слева. */
   background: var(--bg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 16vh var(--pad) 0;
+  padding: 16dvh var(--pad) 0;
 }
 
 .hero__content {
@@ -218,7 +213,7 @@ a {
   align-items: flex-end;
   right: -14vw;
   mix-blend-mode: screen;
-  font-size: min(calc(170vw / (var(--cols) * 0.6)), calc(58vh / var(--rows)));
+  font-size: min(calc(170vw / (var(--cols) * 0.6)), calc(58dvh / var(--rows)));
 }
 
 .ascii-video__frame {
@@ -284,7 +279,7 @@ a {
   font-family: var(--font-mono);
   font-weight: 400;
   text-transform: none;
-  font-size: min(0.68vh, (100vw - var(--pad) * 2) / 52);
+  font-size: min(0.68dvh, (100vw - var(--pad) * 2) / 52);
   line-height: 1.188;
   white-space: pre;
   font-variant-ligatures: none;
@@ -324,25 +319,35 @@ a {
     right: 0;
     font-size: min(
       calc(100vw / (var(--cols) * 0.6)),
-      calc(100vh / var(--rows))
+      calc(100dvh / var(--rows))
     );
   }
 
   .ascii-flower {
-    font-size: min(1.3vh, 0.74vw);
+    font-size: min(1.3dvh, 0.74vw);
   }
 }
 
-.intro {
+/* Сцена «О себе»: экран стоит на месте, пока прокрутка ведёт наезд на букву
+   «г» в слове «графикой». Высота сверх экрана — это ход наезда (Intro.jsx). */
+.intro-scene {
   position: relative;
-  /* Секция прозрачная и выше экрана: под ней на общем холсте (.morph) стекло с
-     пятнами и тёмный блоб, которому нужен ход. Текст в exclusion над белым
-     становится тёмным, над блобом светлым, над пятнами цветным. */
-  /* Ровно один экран: сверху сразу hero, снизу сразу «Работы». Наезд на ход
-     hero: пока страница стекает каплей, текст «О себе» уже входит снизу —
-     иначе после готовой капли остаётся экран пустого стекла. */
-  min-height: calc(100vh + 200px);
-  margin-top: -80vh;
+  background: var(--paper);
+  height: 260vh;
+}
+
+.intro-scene--flat {
+  height: auto;
+}
+
+.intro {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  /* Буква вырастает далеко за края — за пределы экрана её не выпускаем. */
+  overflow: hidden;
+  /* Бумага секции: раньше её рисовал общий холст под секциями, теперь свой фон. */
+  background: var(--paper);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -350,22 +355,26 @@ a {
   padding: 100px var(--pad);
 }
 
-/* Холст фигуры: фиксированный, с запасом за краями окна (BLEED в MorphBackdrop),
-   размыт — границы фигуры мягкие везде, где видны. */
-/* Пролёт перед «Работами». Вместе с MERGE_END даёт ход превращения такой же,
-   как у сжатия hero (60vh), но заканчивается он уже на въехавших «Работах». */
-.morph-gate {
-  height: 20vh;
+.intro-scene--flat .intro {
+  position: relative;
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
 }
 
-.morph {
-  position: fixed;
-  top: -80px;
-  left: -80px;
-  z-index: -1;
-  display: block;
+/* Чернила буквы, залившие кадр. Цвет — фон «Избранных работ», поэтому конец
+   сцены и начало следующей секции сходятся без стыка. */
+.intro__ink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--bg);
+  opacity: 0;
   pointer-events: none;
-  filter: blur(26px);
+}
+
+.intro-scene--flat .intro__ink {
+  display: none;
 }
 
 /* Слово неразрывно, буква — отдельный слой для волны появления (Intro.jsx). */
@@ -379,23 +388,34 @@ a {
   will-change: color;
 }
 
+/* Обёртка наезда: на ней сдвиг кадра, а на самом тексте — zoom. Держим их
+   врозь, чтобы поправка сдвига считалась в настоящих пикселях. */
+.intro__zoom {
+  position: relative;
+  z-index: 1;
+}
+
 .intro__text {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: clamp(26px, 4.4vw, 62px);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  max-width: 22ch;
-  /* Набрано как акцент в hero: Nyght Serif, курсив, акцентный красный. Вес 400
-     и курсив обязательны — @font-face объявляет ровно одно лицо, и любой другой
-     запрос уходит в запасную Georgia, уже прямую. Бленда здесь нет (был
-     exclusion), цвет один на весь блок. */
-  font-family: var(--font-accent);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--accent);
+  /* Текст — главный объект экрана: крупно, по центру, чёрным (07.09.2026).
+     Набор — Inter, как весь интерфейс, а не акцентный курсив.
+     Границы clamp в rem, а не в px: при увеличенном системном шрифте кегль и
+     отступы растут вместе с ним. Трекинг задан ступенями ниже — одно значение
+     на все размеры всегда неверно на одном из концов. */
+  font-size: clamp(2.125rem, 6.2vw, 6rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-optical-sizing: auto;
+  max-width: 18ch;
+  margin: 0 auto;
+  text-align: center;
+  font-family: var(--font);
+  font-style: normal;
+  font-weight: 600;
+  color: #0b0b0d;
 }
 
 .intro__text-accent {
@@ -404,10 +424,17 @@ a {
   font-family: inherit;
 }
 
+/* Трекинг по кеглю: чем крупнее набор, тем плотнее. На узком экране кегль
+   средний, и −0.035em там уже слипается. */
+@media (max-width: 1180px) {
+  .intro__text {
+    letter-spacing: -0.025em;
+  }
+}
+
 .works {
-  /* Фон прозрачный: страница «Работ» — это разросшаяся капля на холсте
-     MorphBackdrop. Верхний отступ мал, чтобы заголовок вошёл сразу за
-     превращением, а не после экрана пустого чёрного. */
+  position: relative;
+  background: var(--bg);
   padding: clamp(28px, 4vh, 56px) var(--pad) clamp(80px, 12vh, 160px);
 }
 
@@ -498,7 +525,7 @@ a {
   top: 0 !important;
   left: 0 !important;
   width: 100vw !important;
-  height: 100vh !important;
+  height: 100dvh !important;
   border-radius: 0;
 }
 
@@ -565,7 +592,7 @@ a {
 .stack__sticky {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -681,7 +708,7 @@ a {
 .burn__sticky {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -731,11 +758,11 @@ a {
 }
 
 .contact {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(100px, 16vh, 200px) var(--pad) 40px;
+  padding: clamp(100px, 16dvh, 200px) var(--pad) 40px;
 }
 
 .contact__kicker {
@@ -804,11 +831,18 @@ a {
 }
 
 @media (max-width: 760px) {
-  /* На телефонах текст «О себе» упирался в нижнюю границу clamp (26px) и был
-     мелким: здесь он считается от ширины экрана и занимает её целиком. */
+  .intro {
+    padding: 100px 14px;
+  }
+
+  /* Кегль упирается не в экран, а в самое длинное слово: «ЗАВОРАЖИВАЮЩИЕ» в
+     Inter при здешнем трекинге занимает 10.55em, и при большем размере оно
+     вылезает за край. Меняешь letter-spacing — пересчитай делитель. */
   .intro__text {
-    font-size: clamp(30px, 8.4vw, 42px);
-    line-height: 1.06;
+    font-size: min(9vw, calc((100vw - 28px) / 10.65));
+    line-height: 1.16;
+    letter-spacing: -0.015em;
+    gap: 8px;
     max-width: none;
   }
 
