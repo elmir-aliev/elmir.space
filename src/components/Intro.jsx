@@ -92,6 +92,7 @@ export function Intro() {
   const zoomRef = useRef(null);
   const lastZoom = useRef(-1);
   const pinRef = useRef(0);
+  const sceneTopRef = useRef(0);
   const shiftRef = useRef({ x: 0, y: 0 });
 
   const paint = useCallback((wave) => {
@@ -171,9 +172,6 @@ export function Intro() {
     lastZoom.current = pin;
 
     const t0 = import.meta.env.DEV ? performance.now() : 0;
-    // Рамку сцены читаем ДО записи zoom: чтение после записи заставляло движок
-    // пересобирать раскладку синхронно на каждом кадре.
-    const sb = stage.getBoundingClientRect();
     const t = clamp01((pin - ZOOM_START) / (1 - ZOOM_START));
     const k = Math.pow(geom.max, Math.pow(t, ZOOM_BEND));
     const alpha = smooth(clamp01((t - INK_FROM) / (INK_TO - INK_FROM)));
@@ -209,8 +207,11 @@ export function Intro() {
     const aimX = mix(geom.w / 2, geom.ox, aim);
     const aimY = mix(geom.h / 2, geom.oy, aim);
 
-    shift.x = sb.width / 2 - aimX * k;
-    shift.y = sb.height / 2 - aimY * k;
+    // Размер экрана сцены фиксируется при замере. На iPhone видимая высота
+    // меняется при сворачивании панели Safari; если читать её здесь живьём,
+    // центр сцены прыгает вместе с панелью и дёргает весь текст.
+    shift.x = geom.viewportW / 2 - aimX * k;
+    shift.y = geom.viewportH / 2 - aimY * k;
     frame.style.transform = `translate3d(${shift.x.toFixed(2)}px, ${shift.y.toFixed(
       2,
     )}px, 0)`;
@@ -221,7 +222,11 @@ export function Intro() {
     // что уже нарисовал композитор iOS.
     if (import.meta.env.DEV) {
       const j = (window.__introJitter ||= []);
-      j.push([window.scrollY, +sb.top.toFixed(2), +shift.y.toFixed(2)]);
+      j.push([
+        window.scrollY,
+        +sceneTopRef.current.toFixed(2),
+        +shift.y.toFixed(2),
+      ]);
       if (j.length > 150) j.shift();
     }
 
@@ -288,6 +293,8 @@ export function Intro() {
       h: tb.height,
       ox: cb.left - tb.left + cb.width * INK_X,
       oy: cb.top - tb.top + cb.height * INK_Y,
+      viewportW: sb.width,
+      viewportH: sb.height,
     };
     // Для проверки на телефоне: замер изнутри zoom там врёт, поэтому попадание
     // в центр сверяется по отрисовке — elementFromPoint против этой цели
@@ -339,8 +346,11 @@ export function Intro() {
       measure() {
         const rect = scene.getBoundingClientRect();
         top = rect.top;
+        sceneTopRef.current = top;
         height = rect.height;
-        viewport = window.innerHeight;
+        // Высота sticky-экрана стабильна на iPhone (100svh в CSS), в отличие
+        // от innerHeight, который меняется вместе с адресной строкой Safari.
+        viewport = stageRef.current?.clientHeight || window.innerHeight;
       },
       render() {
         const wave = clamp01(
