@@ -14,7 +14,40 @@
     sans-serif;
   --font-accent: "Nyght Serif", "Iowan Old Style", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, "Cascadia Mono", monospace;
-  --pad: clamp(20px, 5vw, 72px);
+
+  /* Единая жидкая шкала — единственный источник размеров (08.09.2026).
+     В правилах ниже не должно быть ни одного clamp() или кегля в px по месту:
+     промежуточные значения не берутся, всё масштабируется согласованно.
+
+     Полоса — 360…1600px. Ступени подогнаны так, что на 390 и на 1440 дают
+     ровно те кегли, что стояли до введения шкалы, — переход на токены ничего
+     не сдвинул, изменилось только поведение на краях.
+
+     Середина формулы — `rem + vw`, а не чистые vw: rem-слагаемое тянется за
+     системным шрифтом и зумом браузера, поэтому набор растёт вместе с ними,
+     а не остаётся приколоченным к ширине окна. */
+  --step--2: clamp(0.809rem, 0.766rem + 0.19vw, 0.957rem); /* 13 → 15  подписи, мета */
+  --step--1: clamp(0.871rem, 0.829rem + 0.19vw, 1.019rem); /* 14 → 16  меню, интерфейс */
+  --step-0: clamp(0.932rem, 0.868rem + 0.29vw, 1.154rem); /* 15 → 18  базовый текст */
+  --step-1: clamp(1.114rem, 0.986rem + 0.57vw, 1.557rem); /* 18 → 25  лид, крупный текст */
+  --step-2: clamp(1.232rem, 1.018rem + 0.95vw, 1.97rem); /* 20 → 31  заголовок секции */
+  --step-3: clamp(1.814rem, 1.086rem + 3.24vw, 4.324rem); /* 29 → 69 */
+  --step-4: clamp(2.026rem, 0.842rem + 5.27vw, 6.106rem); /* 32 → 98 */
+  --step-5: clamp(2.263rem, 0.917rem + 5.98vw, 6.898rem); /* 36 → 110 */
+  --step-6: clamp(2.823rem, 2.205rem + 2.75vw, 4.955rem); /* 45 → 79  первый экран */
+
+  --space-nav: clamp(1.089rem, 0.661rem + 1.9vw, 2.565rem); /* 17 → 41 */
+  /* Вертикальный ритм ведёт высота экрана, а не ширина: формулы прежние,
+     границы переведены в rem, чтобы тянулись за системным шрифтом. */
+  --space-v-s: clamp(1.75rem, 4vh, 3.5rem); /* 28 → 56 */
+  --space-v-m: clamp(2.5rem, 7vh, 5rem); /* 40 → 80 */
+  --space-v-l: clamp(5rem, 12vh, 10rem); /* 80 → 160 */
+  --space-v-xl: clamp(6.25rem, 16dvh, 12.5rem); /* 100 → 200 */
+  --space-stagger: clamp(0rem, 10vh, 7.5rem); /* 0 → 120, сдвиг чётных карточек */
+  --space-grid: clamp(1.671rem, 0.729rem + 4.19vw, 4.919rem); /* 27 → 79 */
+  /* Поле страницы. Имя оставлено прежним: подставляется в десятке правил. */
+  --pad: clamp(1.157rem, 0.043rem + 4.95vw, 4.995rem); /* 18 → 80 */
+
   text-transform: uppercase;
 }
 
@@ -116,7 +149,7 @@ a {
 }
 
 .header__logo {
-  font-size: 15px;
+  font-size: var(--step-0);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -127,8 +160,8 @@ a {
 
 .header__nav {
   display: flex;
-  gap: clamp(18px, 3vw, 38px);
-  font-size: 14px;
+  gap: var(--space-nav);
+  font-size: var(--step--1);
 }
 
 .header__nav a {
@@ -167,7 +200,7 @@ a {
 }
 
 .hero__kicker {
-  font-size: 13px;
+  font-size: var(--step--2);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -389,9 +422,23 @@ a {
 }
 
 /* Обёртка наезда: на ней сдвиг кадра, а на самом тексте — zoom. Держим их
-   врозь, чтобы поправка сдвига считалась в настоящих пикселях. */
+   врозь, чтобы сдвиг считался в настоящих пикселях.
+
+   Набор внутри обёртки НЕ центрируется раскладкой — ни `margin: auto`, ни
+   `justify-content`. Оба способа по-разному кладут переполняющий блок в разных
+   движках (авто-поля при переполнении обнуляются, флекс выпускает за оба края),
+   а на iOS к этому добавляется то, что ширина под `zoom` не считается
+   увеличенной. Центрирование целиком ведёт трансформ из Intro.jsx: он и так
+   каждый кадр наводит букву в центр экрана, а раскладке остаётся только
+   предсказуемый угол — левый верхний край обёртки в любом движке. */
 .intro__zoom {
-  position: relative;
+  /* Вне потока и приколота к углу экрана сцены. Так её место не зависит ни от
+     собственной высоты (а она под наездом вырастает в десятки раз), ни от того,
+     как движок центрирует переполняющий блок. Положение целиком задаёт
+     трансформ из Intro.jsx, и считать его можно наперёд, ничего не замеряя. */
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 1;
 }
 
@@ -405,12 +452,13 @@ a {
      Границы clamp в rem, а не в px: при увеличенном системном шрифте кегль и
      отступы растут вместе с ним. Трекинг задан ступенями ниже — одно значение
      на все размеры всегда неверно на одном из концов. */
-  font-size: clamp(2.125rem, 6.2vw, 6rem);
+  font-size: var(--step-4);
   line-height: 1.04;
   letter-spacing: -0.035em;
   font-optical-sizing: auto;
   max-width: 18ch;
-  margin: 0 auto;
+  /* Не `0 auto`: положение задаёт трансформ обёртки, см. .intro__zoom выше. */
+  margin: 0;
   text-align: center;
   font-family: var(--font);
   font-style: normal;
@@ -435,7 +483,7 @@ a {
 .works {
   position: relative;
   background: var(--bg);
-  padding: clamp(28px, 4vh, 56px) var(--pad) clamp(80px, 12vh, 160px);
+  padding: var(--space-v-s) var(--pad) var(--space-v-l);
 }
 
 .works__head {
@@ -443,24 +491,24 @@ a {
   align-items: baseline;
   justify-content: space-between;
   padding-bottom: 28px;
-  margin-bottom: clamp(40px, 7vh, 80px);
+  margin-bottom: var(--space-v-m);
 }
 
 .works__head h2 {
-  font-size: clamp(20px, 2.2vw, 30px);
+  font-size: var(--step-2);
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
 .works__head p {
-  font-size: 13px;
+  font-size: var(--step--2);
   color: var(--muted);
 }
 
 .works__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: clamp(28px, 5vw, 76px);
+  gap: var(--space-grid);
 }
 
 .work {
@@ -470,7 +518,7 @@ a {
 }
 
 .work:nth-child(even) {
-  margin-top: clamp(0px, 10vh, 120px);
+  margin-top: var(--space-stagger);
 }
 
 .work__link {
@@ -566,21 +614,21 @@ a {
 }
 
 .work__meta h3 {
-  font-size: clamp(19px, 1.8vw, 24px);
+  font-size: var(--step-1);
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
 .work__meta p {
   grid-column: 1;
-  font-size: 14px;
+  font-size: var(--step--1);
   color: var(--muted);
 }
 
 .work__meta span {
   grid-row: 1;
   grid-column: 2;
-  font-size: 13px;
+  font-size: var(--step--2);
   color: var(--muted);
 }
 
@@ -726,7 +774,7 @@ a {
 }
 
 .burn__kicker {
-  font-size: 13px;
+  font-size: var(--step--2);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
@@ -734,7 +782,7 @@ a {
 }
 
 .burn__title {
-  font-size: clamp(30px, 4.6vw, 64px);
+  font-size: var(--step-3);
   line-height: 1.05;
   letter-spacing: -0.03em;
   font-weight: 600;
@@ -743,7 +791,7 @@ a {
 .burn__text {
   margin: 26px auto 0;
   max-width: 46ch;
-  font-size: clamp(15px, 1.3vw, 18px);
+  font-size: var(--step-0);
   line-height: 1.55;
   color: var(--muted);
 }
@@ -762,14 +810,14 @@ a {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(100px, 16dvh, 200px) var(--pad) 40px;
+  padding: var(--space-v-xl) var(--pad) 40px;
 }
 
 .contact__kicker {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: var(--step--2);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -785,7 +833,7 @@ a {
 }
 
 .contact__title {
-  font-size: clamp(38px, 7vw, 104px);
+  font-size: var(--step-5);
   line-height: 0.98;
   letter-spacing: -0.04em;
   font-weight: 600;
@@ -808,7 +856,7 @@ a {
   text-transform: lowercase;
   margin-top: 44px;
   align-self: flex-start;
-  font-size: clamp(17px, 1.8vw, 24px);
+  font-size: var(--step-1);
   border-bottom: 1px solid var(--line);
   padding-bottom: 6px;
   transition:
@@ -826,7 +874,7 @@ a {
   justify-content: space-between;
   margin-top: auto;
   padding-top: 80px;
-  font-size: 13px;
+  font-size: var(--step--2);
   color: var(--muted);
 }
 
@@ -860,9 +908,5 @@ a {
 
   .stack {
     height: 320vh;
-  }
-
-  .header__nav {
-    font-size: 13px;
   }
 }

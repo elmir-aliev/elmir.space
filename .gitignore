@@ -3,7 +3,3 @@ node_modules
 *.local
 .env
 .env.*
-dist
-dist-ssr
-.vercel
-.playwright-mcp

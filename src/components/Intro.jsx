@@ -69,6 +69,12 @@ const STEM_W = 0.246;
 // сцен не виден.
 const INK_FROM = 0.84;
 const INK_TO = 0.99;
+// Куда наводим кадр. В покое — на середину набора, иначе на узком экране блок
+// стоит заметно вбок: буква «г» правее своей середины, и на 390px эти пиксели
+// съедают весь отступ слева (замер 08.09.2026: −2px слева против 30px справа).
+// К началу наезда цель плавно переходит на саму букву — к этому моменту
+// масштаб ещё около двойки, и подмену цели не видно.
+const AIM_SPAN = 0.3;
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const mix = (a, b, t) => a + (b - a) * t;
@@ -164,6 +170,10 @@ export function Intro() {
     if (Math.abs(pin - lastZoom.current) < 0.0004) return;
     lastZoom.current = pin;
 
+    const t0 = import.meta.env.DEV ? performance.now() : 0;
+    // Рамку сцены читаем ДО записи zoom: чтение после записи заставляло движок
+    // пересобирать раскладку синхронно на каждом кадре.
+    const sb = stage.getBoundingClientRect();
     const t = clamp01((pin - ZOOM_START) / (1 - ZOOM_START));
     const k = Math.pow(geom.max, Math.pow(t, ZOOM_BEND));
     const alpha = smooth(clamp01((t - INK_FROM) / (INK_TO - INK_FROM)));
@@ -177,17 +187,55 @@ export function Intro() {
     frame.style.visibility = "";
     text.style.zoom = k.toFixed(4);
 
-    // Куда буква уехала после пересборки раскладки — читаем и доводим сдвигом.
-    // Сдвиг живёт на обёртке, у неё zoom не тронут, поэтому пиксель здесь
-    // настоящий и поправка точна с первого кадра.
-    const cb = target.getBoundingClientRect();
-    const sb = stage.getBoundingClientRect();
+    // Положение считается наперёд, без единого замера внутри сцены.
+    //
+    // Замерять рамку буквы нельзя: она внутри zoom-контекста, а Safari на iOS
+    // отдаёт оттуда нескалированные числа (проверено на телефоне 08.09.2026:
+    // при zoom 4 рамка и offsetWidth те же, что при 1).
+    //
+    // Замерять рамку обёртки и вычитать из неё свой же прошлый сдвиг — тоже
+    // нельзя, хотя так здесь и было: это чтение назад собственного трансформа,
+    // и любая неточность на кадр множится на k. Замер рывка на айфоне показал
+    // ровно это — вторая разность сдвига p50=2.1px, p95=8.3px, всплески до
+    // 96px при гладкой прокрутке и кадрах ровно по 17ms. Это и было дёрганье.
+    //
+    // Теперь обёртка стоит вне потока в углу сцены (см. .intro__zoom в CSS),
+    // поэтому её место известно заранее: это угол сцены. Всё, что нужно, —
+    // размеры сцены и доли, снятые один раз при zoom 1.
     const shift = shiftRef.current;
-    shift.x += sb.left + sb.width / 2 - (cb.left + cb.width * INK_X);
-    shift.y += sb.top + sb.height / 2 - (cb.top + cb.height * INK_Y);
+
+    // Цель едет от середины набора к точке входа в букву.
+    const aim = smooth(clamp01(t / AIM_SPAN));
+    const aimX = mix(geom.w / 2, geom.ox, aim);
+    const aimY = mix(geom.h / 2, geom.oy, aim);
+
+    shift.x = sb.width / 2 - aimX * k;
+    shift.y = sb.height / 2 - aimY * k;
     frame.style.transform = `translate3d(${shift.x.toFixed(2)}px, ${shift.y.toFixed(
       2,
     )}px, 0)`;
+
+    // Рывок по кадрам: прокрутка, реальное положение сцены (замер рамки) и наш
+    // сдвиг. Если ряды гладкие, а глазу дёргается — виновата отрисовка, а не
+    // расчёт; если скачет sb.top при гладком scrollY — замер расходится с тем,
+    // что уже нарисовал композитор iOS.
+    if (import.meta.env.DEV) {
+      const j = (window.__introJitter ||= []);
+      j.push([window.scrollY, +sb.top.toFixed(2), +shift.y.toFixed(2)]);
+      if (j.length > 150) j.shift();
+    }
+
+    // Во сколько обходится кадр наезда. Запись zoom + чтение рамки — это
+    // принудительная пересборка раскладки на каждый кадр, и на телефоне она
+    // может стоить дороже кадрового бюджета; тогда дёрганье не от логики,
+    // а от неё. Меряем только в dev (tools/phone-log это забирает).
+    if (import.meta.env.DEV) {
+      const cost = performance.now() - t0;
+      const c = (window.__introCost ||= { n: 0, sum: 0, max: 0 });
+      c.n += 1;
+      c.sum += cost;
+      if (cost > c.max) c.max = cost;
+    }
   }, []);
 
   // Предел наезда: считается по нетронутой раскладке, потому что во время
@@ -206,13 +254,23 @@ export function Intro() {
     frame.style.transform = "";
     shiftRef.current = { x: 0, y: 0 };
 
-    const cb = target.getBoundingClientRect();
     const sb = stage.getBoundingClientRect();
+
+    // Обёртка стоит вне потока в углу сцены и внутренних отступов секции не
+    // знает — поля набора задаём сами, по содержимому сцены. Своё `max-width`
+    // (18ch на широком экране) при этом остаётся в силе, берём меньшее.
+    const box = getComputedStyle(stage);
+    const room =
+      sb.width - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight);
+    const own = parseFloat(getComputedStyle(text).maxWidth);
+    text.style.maxWidth = `${(Number.isFinite(own) ? Math.min(own, room) : room).toFixed(2)}px`;
+
+    const cb = target.getBoundingClientRect();
     const tb = text.getBoundingClientRect();
     const fs = parseFloat(getComputedStyle(text).fontSize) || 16;
 
     // Ширину набора фиксируем в пикселях: zoom растит текст, а рамку экрана —
-    // нет, и на своей `max-width: 18ch` строка начала бы переноситься заново.
+    // нет, и на своей `max-width` строка начала бы переноситься заново.
     // С жёсткой шириной пропорция «кегль к строке» держится на любом наезде,
     // и переносы остаются те же, что в покое.
     text.style.width = `${tb.width.toFixed(2)}px`;
@@ -223,7 +281,19 @@ export function Intro() {
         ZOOM_FONT_CAP / fs,
         Math.max(8, (sb.width / (cb.width * STEM_W)) * ZOOM_FILL),
       ),
+      // Точка входа внутри набора при zoom 1: при наезде всё внутри растёт
+      // ровно в k раз, поэтому положение буквы дальше считается, а не
+      // замеряется (см. zoomTo — на iOS замер изнутри zoom врёт).
+      w: tb.width,
+      h: tb.height,
+      ox: cb.left - tb.left + cb.width * INK_X,
+      oy: cb.top - tb.top + cb.height * INK_Y,
     };
+    // Для проверки на телефоне: замер изнутри zoom там врёт, поэтому попадание
+    // в центр сверяется по отрисовке — elementFromPoint против этой цели
+    // (tools/phone-log).
+    if (import.meta.env.DEV) window.__introTarget = target;
+
     lastZoom.current = -1;
     zoomTo(pinRef.current);
   }, [zoomTo]);
@@ -231,8 +301,22 @@ export function Intro() {
   useEffect(() => {
     measureZoom();
     document.fonts?.ready.then(measureZoom);
-    window.addEventListener("resize", measureZoom);
-    return () => window.removeEventListener("resize", measureZoom);
+
+    // Пересчитываем только на смену ширины. На телефоне прокрутка сворачивает
+    // адресную строку, и `resize` прилетает пачкой — за один проход сцены их
+    // насчиталось двенадцать (лог с айфона 08.09.2026, высота скакала
+    // 663↔745). Каждый сбрасывал zoom и сдвиг посреди наезда, и текст дёргался.
+    // Замер зависит только от ширины: кегль, ширина буквы и ширина набора.
+    // Высоту сцена читает живьём каждый кадр, ей пересчёт не нужен.
+    let width = window.innerWidth;
+    const onResize = () => {
+      if (window.innerWidth === width) return;
+      width = window.innerWidth;
+      measureZoom();
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, [measureZoom]);
 
   useEffect(() => {
