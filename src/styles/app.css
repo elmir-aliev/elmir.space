@@ -252,6 +252,7 @@ a {
 .ascii-video__frame {
   position: relative;
   width: max-content;
+  transform: translate3d(0, 3dvh, 0);
 }
 
 /* Само видео на экране не показывается — оно источник для холста ниже;
@@ -276,6 +277,24 @@ a {
   display: block;
   width: calc(100% - 2px);
   height: calc(100% - 2px);
+  overflow: hidden;
+}
+
+/* Нижние знаки постепенно теряют цвет и сходятся со светлой бумагой следующей
+   секции. Градиент лежит на цветном слое, поэтому осветляются только глифы,
+   а прямоугольная подложка ASCII остаётся невидимой. */
+.ascii-video__color::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 72%,
+    rgba(243, 240, 234, 0.42) 88%,
+    var(--paper) 100%
+  );
+  mix-blend-mode: screen;
 }
 
 .ascii-video__glyphs {
@@ -354,6 +373,10 @@ a {
       calc(100vw / (var(--cols) * 0.6)),
       calc(100dvh / var(--rows))
     );
+  }
+
+  .ascii-video__frame {
+    transform: translate3d(0, 7dvh, 0);
   }
 
   .ascii-flower {
