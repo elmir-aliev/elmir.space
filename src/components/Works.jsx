@@ -2,77 +2,65 @@ import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useScrollProgress } from '../scroll/useScrollProgress';
-import frizShot from '../assets/works/friz.jpg';
+import frizMain from '../assets/works/friz-intro.png';
+import frizInterior from '../assets/works/friz-interior.webp';
+import frizProject from '../assets/works/friz-project.webp';
 
-/*
- * image — главный экран сайта проекта, url — настоящий адрес. Карточка с url
- * кликабельна: её экран разъезжается на весь вьюпорт, и по окончании перехода
- * открывается сам сайт. У проектов без url — заглушка-градиент, клика нет.
- * Без рамки браузера, номеров и анимации при наведении — по замечанию пользователя.
- */
-const works = [
-  {
-    id: 1,
-    title: 'Friz',
-    kind: 'Мебельная студия',
-    year: '2026',
-    tone: 'warm',
-    url: 'https://friz-spb.ru',
-    image: frizShot,
-  },
-  { id: 2, title: 'Kadr', kind: 'Портал фотостудии', year: '2025', tone: 'cold' },
-  { id: 3, title: 'Volna', kind: 'Промо музыкального фестиваля', year: '2025', tone: 'deep' },
-  { id: 4, title: 'Atlas', kind: 'Дашборд аналитики', year: '2024', tone: 'mono' },
-];
+const featuredWork = {
+  title: 'Friz',
+  url: 'https://friz-spb.ru',
+  image: frizMain,
+};
 
 const ZOOM_DURATION = 900;
+const SCRUB = 0.8;
+const REVEAL_START = 'top 96%';
+const REVEAL_END = 'top 34%';
+const CLIP_FROM = 'inset(14% 6% 14% 6% round 10px)';
+const CLIP_TO = 'inset(0% 0% 0% 0% round 10px)';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/*
- * Появление привязано к прокрутке (scrub), а не к моменту входа: карточка
- * раскрывается, пока её верх идёт от нижнего края окна к REVEAL_END, и на быстром
- * скролле Lenis это читается как одно движение. Экран проекта выходит из
- * обрезки с приближенной картинкой, подпись догоняет во второй половине хода.
- */
-const SCRUB = 0.8;
-const REVEAL_START = 'top 100%';
-const REVEAL_END = 'top 52%';
-const CLIP_FROM = 'inset(16% 7% 16% 7% round 10px)';
-const CLIP_TO = 'inset(0% 0% 0% 0% round 10px)';
-const ZOOM_FROM = 1.22;
-const DRIFT = 90;
-
-function revealWorks(section) {
+function revealWork(section) {
   const head = section.querySelectorAll('.works__head > *');
+  const work = section.querySelector('.featured-work');
+  const hero = work.querySelector('.featured-work__hero');
+  const details = work.querySelectorAll('.featured-work__detail');
+  const content = work.querySelectorAll('.featured-work__content > *');
+
   gsap
     .timeline({
-      scrollTrigger: { trigger: section, start: 'top 85%', end: 'top 55%', scrub: SCRUB },
+      scrollTrigger: { trigger: section, start: 'top 86%', end: 'top 56%', scrub: SCRUB },
       defaults: { ease: 'none' },
     })
-    .fromTo(head, { y: 36, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.15 });
+    .fromTo(head, { y: 36, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.14 });
 
-  section.querySelectorAll('.work').forEach((card) => {
-    const media = card.querySelector('.work__media');
-    const meta = card.querySelectorAll('.work__meta > *');
-
-    gsap
-      .timeline({
-        scrollTrigger: { trigger: card, start: REVEAL_START, end: REVEAL_END, scrub: SCRUB },
-        defaults: { ease: 'none' },
-      })
-      .fromTo(card, { y: DRIFT }, { y: 0, duration: 1 }, 0)
-      .fromTo(
-        media,
-        { clipPath: CLIP_FROM, '--zoom': ZOOM_FROM, opacity: 0 },
-        { clipPath: CLIP_TO, '--zoom': 1, opacity: 1, duration: 0.85 },
-        0,
-      )
-      .fromTo(meta, { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.08 }, 0.45);
-  });
+  gsap
+    .timeline({
+      scrollTrigger: { trigger: work, start: REVEAL_START, end: REVEAL_END, scrub: SCRUB },
+      defaults: { ease: 'none' },
+    })
+    .fromTo(work, { y: 88 }, { y: 0, duration: 1 }, 0)
+    .fromTo(
+      hero,
+      { clipPath: CLIP_FROM, '--zoom': 1.18, opacity: 0 },
+      { clipPath: CLIP_TO, '--zoom': 1, opacity: 1, duration: 0.75 },
+      0,
+    )
+    .fromTo(
+      details,
+      { clipPath: 'inset(18% 8% 18% 8% round 10px)', '--zoom': 1.14, opacity: 0 },
+      { clipPath: CLIP_TO, '--zoom': 1, opacity: 1, duration: 0.65, stagger: 0.1 },
+      0.18,
+    )
+    .fromTo(
+      content,
+      { y: 28, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.42, stagger: 0.07 },
+      0.48,
+    );
 }
 
-// Экран проекта из карточки растёт до размеров окна, затем открывается сайт.
 function zoomInto(frame, work) {
   const rect = frame.getBoundingClientRect();
   const overlay = document.createElement('div');
@@ -95,66 +83,83 @@ function zoomInto(frame, work) {
   window.setTimeout(() => window.location.assign(work.url), ZOOM_DURATION);
 }
 
-function WorkCard({ work, index }) {
-  const ref = useRef(null);
-  const frameRef = useRef(null);
-  useScrollProgress(ref, { mode: 'through', varName: '--p' });
-
-  const handleClick = (event) => {
-    event.preventDefault();
-    zoomInto(frameRef.current, work);
-  };
-
-  const frame = (
-    <div ref={frameRef} className={`work__media work__media--${work.tone}`}>
-      {work.image && <img src={work.image} alt={`Главный экран сайта ${work.title}`} />}
-    </div>
-  );
-
-  return (
-    <article ref={ref} className="work" style={{ '--i': index }}>
-      {work.url ? (
-        <a
-          className="work__link"
-          href={work.url}
-          onClick={handleClick}
-          aria-label={`Открыть сайт ${work.title}`}
-        >
-          {frame}
-        </a>
-      ) : (
-        frame
-      )}
-
-      <div className="work__meta">
-        <h3>{work.title}</h3>
-        <p>{work.kind}</p>
-        <span>{work.year}</span>
-      </div>
-    </article>
-  );
-}
-
 export function Works() {
   const ref = useRef(null);
+  const workRef = useRef(null);
+  const heroRef = useRef(null);
+  useScrollProgress(workRef, { mode: 'through', varName: '--p' });
 
   useLayoutEffect(() => {
-    const ctx = gsap.context(() => revealWorks(ref.current), ref);
+    const ctx = gsap.context(() => revealWork(ref.current), ref);
     return () => ctx.revert();
   }, []);
+
+  const handleOpen = (event) => {
+    event.preventDefault();
+    zoomInto(heroRef.current, featuredWork);
+  };
 
   return (
     <section ref={ref} className="works" id="works">
       <header className="works__head">
-        <h2>Избранные работы</h2>
-        <p>2024 — 2026</p>
+        <h2>Избранная работа</h2>
+        <p>01 / 01</p>
       </header>
 
-      <div className="works__grid">
-        {works.map((work, index) => (
-          <WorkCard key={work.id} work={work} index={index} />
-        ))}
-      </div>
+      <article ref={workRef} className="featured-work">
+        <div className="featured-work__gallery">
+          <a
+            className="featured-work__main-link"
+            href={featuredWork.url}
+            onClick={handleOpen}
+            aria-label="Открыть сайт Friz"
+          >
+            <div ref={heroRef} className="featured-work__hero">
+              <img src={frizMain} alt="Главный экран сайта Friz" />
+              <span className="featured-work__open">Открыть сайт ↗</span>
+            </div>
+          </a>
+
+          <div className="featured-work__details">
+            <figure className="featured-work__detail">
+              <img src={frizInterior} alt="Интерьер в каталоге Friz" />
+            </figure>
+            <figure className="featured-work__detail">
+              <img src={frizProject} alt="Проект мебели в портфолио Friz" />
+            </figure>
+          </div>
+        </div>
+
+        <div className="featured-work__content">
+          <div className="featured-work__intro">
+            <p className="featured-work__eyebrow">E-commerce / 2026</p>
+            <h3>Friz</h3>
+            <p className="featured-work__summary">
+              Сайт мебельной студии с плавными переходами, адаптивной галереей и
+              отдельной мобильной механикой.
+            </p>
+          </div>
+
+          <dl className="featured-work__facts">
+            <div>
+              <dt>Роль</dt>
+              <dd>Frontend-разработка</dd>
+            </div>
+            <div>
+              <dt>Стек</dt>
+              <dd>React 19, Vite 8, GSAP, Lenis</dd>
+            </div>
+            <div>
+              <dt>Формат</dt>
+              <dd>E-commerce</dd>
+            </div>
+          </dl>
+
+          <a className="featured-work__cta" href={featuredWork.url} onClick={handleOpen}>
+            Смотреть сайт <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </article>
     </section>
   );
 }
