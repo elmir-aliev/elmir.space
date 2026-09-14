@@ -143,11 +143,11 @@ export function Works() {
           <dl className="featured-work__facts">
             <div>
               <dt>Роль</dt>
-              <dd>Frontend-разработка</dd>
+              <dd>Frontend-разработчик</dd>
             </div>
             <div>
               <dt>Стек</dt>
-              <dd>React 19, Vite 8, GSAP, Lenis</dd>
+              <dd>React , Vite , GSAP, Lenis</dd>
             </div>
             <div>
               <dt>Формат</dt>
