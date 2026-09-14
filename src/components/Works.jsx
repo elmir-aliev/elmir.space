@@ -132,7 +132,7 @@ export function Works() {
 
         <div className="featured-work__content">
           <div className="featured-work__intro">
-            <p className="featured-work__eyebrow">E-commerce / 2026</p>
+            <p className="featured-work__eyebrow">Digital / 2026</p>
             <h3>Friz</h3>
             <p className="featured-work__summary">
               Сайт мебельной студии с плавными переходами, адаптивной галереей и
@@ -151,13 +151,9 @@ export function Works() {
             </div>
             <div>
               <dt>Формат</dt>
-              <dd>E-commerce</dd>
+              <dd>Digital</dd>
             </div>
           </dl>
-
-          <a className="featured-work__cta" href={featuredWork.url} onClick={handleOpen}>
-            Смотреть сайт <span aria-hidden="true">↗</span>
-          </a>
         </div>
       </article>
     </section>
