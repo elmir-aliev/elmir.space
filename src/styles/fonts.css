@@ -1,14 +1,35 @@
 @font-face {
-  font-family: 'Nyght Serif';
-  src: url('../assets/fonts/nyght-serif-italic.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Classic Russian';
+  src: url('../assets/fonts/classic-russian/classicrussian.ttf') format('truetype');
+  font-weight: 100 499;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Classic Russian';
+  src: url('../assets/fonts/classic-russian/classicrussian_italic.ttf') format('truetype');
+  font-weight: 100 499;
   font-style: italic;
   font-display: swap;
 }
 
-/* Inter — переменное начертание 400..700, подмножества кириллицы и латиницы с
-   Google Fonts, положенные локально: в --font он стоял первым, но нигде не
-   подключался, и браузер молча падал на системный шрифт. */
+@font-face {
+  font-family: 'Classic Russian';
+  src: url('../assets/fonts/classic-russian/classicrussian_bold.ttf') format('truetype');
+  font-weight: 500 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Classic Russian';
+  src: url('../assets/fonts/classic-russian/classicrussian_bolditalic.ttf') format('truetype');
+  font-weight: 500 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 @font-face {
   font-family: 'Inter';
   src: url('../assets/fonts/inter-cyrillic.woff2') format('woff2');

@@ -3,14 +3,22 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useScrollProgress } from '../scroll/useScrollProgress';
 import frizMain from '../assets/works/friz-intro.png';
-import frizInterior from '../assets/works/friz-interior.webp';
-import frizProject from '../assets/works/friz-project.webp';
+import frizCase from '../assets/works/friz-card-case.webp';
+import frizHero from '../assets/works/friz-card-hero.webp';
+import frizAfter from '../assets/works/friz-card-after.webp';
+import frizHarizma from '../assets/works/friz-card-harizma.webp';
 
 const featuredWork = {
   title: 'Friz',
   url: 'https://friz-spb.ru',
   image: frizMain,
 };
+
+const media = [
+  { src: frizCase, alt: 'Встроенная мебель из проекта Friz' },
+  { src: frizHero, alt: 'Мягкая мебель в интерьере Friz' },
+  { src: frizAfter, alt: 'Кухня и обеденная зона Friz' },
+];
 
 const ZOOM_DURATION = 900;
 const SCRUB = 0.8;
@@ -25,8 +33,9 @@ function revealWork(section) {
   const head = section.querySelectorAll('.works__head > *');
   const work = section.querySelector('.featured-work');
   const hero = work.querySelector('.featured-work__hero');
-  const details = work.querySelectorAll('.featured-work__detail');
   const content = work.querySelectorAll('.featured-work__content > *');
+  const summary = work.querySelector('.featured-work__summary');
+  const mediaItems = work.querySelectorAll('.featured-work__media');
 
   gsap
     .timeline({
@@ -48,17 +57,37 @@ function revealWork(section) {
       0,
     )
     .fromTo(
-      details,
-      { clipPath: 'inset(18% 8% 18% 8% round 10px)', '--zoom': 1.14, opacity: 0 },
-      { clipPath: CLIP_TO, '--zoom': 1, opacity: 1, duration: 0.65, stagger: 0.1 },
-      0.18,
-    )
-    .fromTo(
       content,
       { y: 28, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.42, stagger: 0.07 },
       0.48,
     );
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: summary,
+          start: 'top 88%',
+          end: 'top 30%',
+          scrub: 0.9,
+          invalidateOnRefresh: true,
+        },
+        defaults: { ease: 'none' },
+      })
+      .fromTo(
+        mediaItems,
+        { width: 0, marginLeft: 0, marginRight: 0 },
+        {
+          width: (_index, target) => getComputedStyle(target).getPropertyValue('--media-width'),
+          marginLeft: '0.08em',
+          marginRight: '0.08em',
+          duration: 0.4,
+          stagger: 0.5,
+          ease: 'power2.out',
+        },
+      );
+  }
 }
 
 function zoomInto(frame, work) {
@@ -120,24 +149,16 @@ export function Works() {
             </div>
           </a>
 
-          <div className="featured-work__details">
-            <figure className="featured-work__detail">
-              <img src={frizInterior} alt="Интерьер в каталоге Friz" />
-            </figure>
-            <figure className="featured-work__detail">
-              <img src={frizProject} alt="Проект мебели в портфолио Friz" />
-            </figure>
-          </div>
+          <p className="featured-work__summary">
+            От {' '}<Media item={media[1]} /> удивительной мебели
+             до невероятных сочетаний цветов {' '}<Media item={media[2]} /> и материалов
+          </p>
         </div>
 
         <div className="featured-work__content">
           <div className="featured-work__intro">
             <p className="featured-work__eyebrow">Digital / 2026</p>
             <h3>Friz</h3>
-            <p className="featured-work__summary">
-              Сайт мебельной студии с плавными переходами, адаптивной галереей и
-              отдельной мобильной механикой.
-            </p>
           </div>
 
           <dl className="featured-work__facts">
@@ -147,7 +168,7 @@ export function Works() {
             </div>
             <div>
               <dt>Стек</dt>
-              <dd>React , Vite , GSAP, Lenis</dd>
+              <dd>React, Vite, GSAP, Lenis</dd>
             </div>
             <div>
               <dt>Формат</dt>
@@ -155,7 +176,16 @@ export function Works() {
             </div>
           </dl>
         </div>
+
       </article>
     </section>
+  );
+}
+
+function Media({ item }) {
+  return (
+    <span className="featured-work__media" aria-label={item.alt} role="img">
+      <img src={item.src} alt="" />
+    </span>
   );
 }

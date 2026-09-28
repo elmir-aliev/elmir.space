@@ -1,6 +1,6 @@
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
-import { Intro } from "./components/Intro";
+import { ScrollStem } from "./components/ScrollStem";
 import { Works } from "./components/Works";
 import { Stack } from "./components/Stack";
 import { BurnSection } from "./components/BurnSection";
@@ -13,9 +13,9 @@ export default function App() {
   return (
     <>
       <Header />
-      <main>
+      <main className="site-main">
+        <ScrollStem />
         <Hero />
-        <Intro />
         <Works />
         <Stack />
         <BurnSection />

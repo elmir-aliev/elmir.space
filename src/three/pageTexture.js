@@ -10,7 +10,7 @@ export function createPageTexture({ width = 1800, height = 1125 } = {}) {
 
   // Фон страницы — ровно фон сайта (--bg): иначе холст читается как более
   // тёмный (или тёплый) прямоугольник поверх секции.
-  ctx.fillStyle = '#0b0b0d';
+  ctx.fillStyle = '#0f1115';
   ctx.fillRect(0, 0, width, height);
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';

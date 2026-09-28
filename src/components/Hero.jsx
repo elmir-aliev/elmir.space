@@ -1,79 +1,78 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { useScrollProgress } from '../scroll/useScrollProgress';
-import { AsciiVideo } from './AsciiVideo';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { SplitText } from 'gsap/SplitText';
+import { HeroFlowers } from './HeroFlowers';
+import { IronhillWipe } from './IronhillWipe';
+import '../styles/hero.css';
 
-// Видео ставится на паузу, когда первый экран целиком ушёл за верх окна.
-const GONE = 1;
-
-// Текст спрятан, пока идёт glyph-matrix, и выходит, когда матрица растворилась
-// и человек собрался целиком (onSettled у AsciiVideo).
-const TEXT_DELAY = 0.1;
-
-// Пока идёт матрица, шапка спрятана классом на <html> (см. .hero-matrix в CSS)
-// и возвращается вместе с текстом.
-const MATRIX_CLASS = 'hero-matrix';
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 export function Hero() {
-  const ref = useRef(null);
-  const contentRef = useRef(null);
-  const [gone, setGone] = useState(false);
-
-  const handleProgress = useCallback((progress) => setGone(progress >= GONE), []);
-
-  useScrollProgress(ref, { mode: 'through', varName: null, onChange: handleProgress });
+  const heroRef = useRef(null);
 
   useLayoutEffect(() => {
-    const targets = contentRef.current.querySelectorAll('.hero__kicker, .hero__line');
-    gsap.set(targets, { opacity: 0 });
-    document.documentElement.classList.add(MATRIX_CLASS);
+    const hero = heroRef.current;
+    if (!hero) return undefined;
+
+    let split;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ctx = gsap.context((self) => {
+      if (reducedMotion) return;
+      const heading = hero.querySelector('.hero-content h2');
+      split = new SplitText(heading, { type: 'words' });
+      gsap.set(split.words, { opacity: 0 });
+
+      ScrollTrigger.create({
+        trigger: hero,
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (trigger) => {
+          self.add(() => {
+            const revealProgress = Math.max(0, Math.min(1, (trigger.progress - 0.58) / 0.36));
+            const total = split.words.length;
+            split.words.forEach((word, index) => {
+              const from = index / total;
+              const to = (index + 1) / total;
+              let opacity = 0;
+              if (revealProgress >= to) opacity = 1;
+              else if (revealProgress >= from) opacity = (revealProgress - from) / (to - from);
+              gsap.to(word, { opacity, duration: 0.1, overwrite: true });
+            });
+          });
+        },
+      });
+    }, heroRef);
+
     return () => {
-      gsap.set(targets, { clearProps: 'all' });
-      document.documentElement.classList.remove(MATRIX_CLASS);
+      ctx.revert();
+      split?.revert();
     };
   }, []);
 
-  const reveal = useCallback(() => {
-    const content = contentRef.current;
-    if (!content) return;
-    const kicker = content.querySelector('.hero__kicker');
-    const lines = content.querySelectorAll('.hero__line');
-    // Размытие крупного текста дорого для телефона — там только сдвиг и прозрачность.
-    const blur = window.matchMedia('(min-width: 900px)').matches;
-    const from = (px) => (blur ? { filter: `blur(${px}px)` } : {});
-    const to = blur ? { filter: 'blur(0px)', clearProps: 'filter' } : {};
-
-    gsap
-      .timeline({ delay: TEXT_DELAY, defaults: { ease: 'power3.out' } })
-      .call(() => document.documentElement.classList.remove(MATRIX_CLASS), null, 0)
-      .fromTo(
-        kicker,
-        { opacity: 0, y: 14, ...from(6) },
-        { opacity: 1, y: 0, duration: 1, ...to },
-        0,
-      )
-      .fromTo(
-        lines,
-        { opacity: 0, y: '0.45em', ...from(14) },
-        { opacity: 1, y: 0, duration: 1.4, stagger: 0.16, ...to },
-        0.15,
-      );
-  }, []);
-
   return (
-    <section ref={ref} className="hero" id="top">
-      <div className="hero__sticky">
-        <AsciiVideo paused={gone} onSettled={reveal} />
+    <section
+      ref={heroRef}
+      className="hero hero--ironhill"
+      id="top"
+      aria-label="Создаю приложения, которые можно полюбить"
+    >
+      <div className="hero-img"><HeroFlowers /></div>
 
-        <div className="hero__content" ref={contentRef}>
-          <h1 className="hero__title">
-            <span className="hero__line">Создаю приложения,</span>
-            <span className="hero__line">которые</span>
-            <em className="hero__line">
-              <span className="hero__title-pull">можно</span> полюбить
-            </em>
-          </h1>
-        </div>
+      <div className="hero-header">
+        <h1>
+          <span>Создаю приложения,</span>
+          <span>которые <em>можно полюбить</em></span>
+        </h1>
+      </div>
+
+      <IronhillWipe heroRef={heroRef} />
+
+      <div className="hero-content">
+        <h2>
+          Пять лет соединяю сложную графику, точную разработку и продуманные
+          взаимодействия в цифровые продукты, которыми хочется пользоваться.
+        </h2>
       </div>
     </section>
   );
