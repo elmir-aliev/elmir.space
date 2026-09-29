@@ -5,6 +5,7 @@ import {
   useImperativeHandle,
   useRef,
 } from 'react';
+import { createTextMorphRenderer } from '../three/textMorphRenderer';
 
 // Порт компонента Morphing Text из MagicUI (magicui.design/docs/components/
 // morphing-text), приведённый к обычному JSX и своему CSS: ставить его через
@@ -34,28 +35,35 @@ const BASE_FONT = 64;
 // стоит дорого: радиус меняется каждый кадр прокрутки, и кэшировать слой
 // браузеру нечего. Выше потолка фильтр снимается совсем, вместе с прозрачностью.
 const MAX_BLUR = 26;
-// Радиус округляется до половины пикселя: соседние кадры чаще совпадают, и
-// браузер переиспользует уже отрисованный слой вместо полного пересчёта.
-const BLUR_STEP = 0.5;
+// Радиус округляется до десятой пикселя: переход остаётся непрерывным, а
+// одинаковые соседние значения ниже не отправляются браузеру повторно.
+const BLUR_STEP = 0.1;
+const MORPH_BLUR_POWER = 1.6;
 
 // На отрезке между соседними фразами морф идёт с 25% до 75% хода, остальное —
 // удержание: иначе текст не успевает читаться.
-const MORPH_START = 0.25;
-const MORPH_END = 0.75;
+const MORPH_START = 0.1;
+const MORPH_END = 0.9;
+const SCROLL_EASING = 8.5;
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 // fraction — насколько строка «проявлена»: 1 — целая, 0 — её нет.
 function apply(el, fraction, scale) {
-  const blur = fraction > 0 ? (8 / fraction - 8) * scale : Infinity;
-  if (blur > MAX_BLUR * scale) {
-    // Порог всё равно ничего не оставит — не тратим кадр на размытие.
-    el.style.filter = 'none';
-    el.style.opacity = '0';
+  if (fraction <= 0.001) {
+    if (el.style.filter !== 'none') el.style.filter = 'none';
+    if (el.style.opacity !== '0') el.style.opacity = '0';
     return;
   }
-  el.style.filter = `blur(${(Math.round(blur / BLUR_STEP) * BLUR_STEP).toFixed(1)}px)`;
-  el.style.opacity = `${(Math.pow(fraction, 0.4) * 100).toFixed(1)}%`;
+
+  // The original reciprocal curve becomes legible in a very narrow interval,
+  // which makes one word appear to pop into the next. This continuous power
+  // curve spends the whole transition reshaping the letter silhouettes.
+  const blur = MAX_BLUR * Math.pow(1 - fraction, MORPH_BLUR_POWER) * scale;
+  const nextFilter = `blur(${(Math.round(blur / BLUR_STEP) * BLUR_STEP).toFixed(1)}px)`;
+  const nextOpacity = `${(Math.pow(fraction, 0.4) * 100).toFixed(1)}%`;
+  if (el.style.filter !== nextFilter) el.style.filter = nextFilter;
+  if (el.style.opacity !== nextOpacity) el.style.opacity = nextOpacity;
 }
 
 function smoothstep(a, b, x) {
@@ -74,7 +82,46 @@ export const MorphingText = forwardRef(function MorphingText(
   const cooldownRef = useRef(0);
   const timeRef = useRef(null);
   const rootRef = useRef(null);
+  const canvasRef = useRef(null);
+  const rendererRef = useRef(null);
+  const currentMorphRef = useRef([0, 0]);
+
+  useEffect(() => {
+    let disposed = false;
+    let gpu;
+    const root = rootRef.current;
+    const rebuild = () => {
+      gpu?.resize();
+      gpu?.draw(...currentMorphRef.current);
+    };
+    const observer = new ResizeObserver(rebuild);
+    document.fonts.ready.then(() => {
+      if (disposed) return;
+      try {
+        gpu = createTextMorphRenderer(canvasRef.current, root, texts);
+        rebuild();
+        rendererRef.current = gpu;
+        root.classList.add('morphing-text--gpu');
+        observer.observe(root);
+      } catch {
+        gpu?.dispose();
+        gpu = null;
+      }
+    });
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      rendererRef.current = null;
+      root.classList.remove('morphing-text--gpu');
+      gpu?.dispose();
+    };
+  }, [texts]);
   const scaleRef = useRef(1);
+  const pairRef = useRef(-1);
+  const targetProgressRef = useRef(0);
+  const displayedProgressRef = useRef(0);
+  const scrollFrameRef = useRef(0);
+  const scrollTimeRef = useRef(0);
 
   // Кегль меняется по медиазапросам, поэтому пересчитываем на resize.
   useEffect(() => {
@@ -92,6 +139,11 @@ export const MorphingText = forwardRef(function MorphingText(
   // fraction — доля перехода от текущей фразы к следующей; index — какая пара.
   const setStyles = useCallback(
     (fraction, index) => {
+      currentMorphRef.current = [fraction, index];
+      if (rendererRef.current) {
+        rendererRef.current.draw(fraction, index);
+        return;
+      }
       const first = text1Ref.current;
       const second = text2Ref.current;
       if (!first || !second) return;
@@ -100,8 +152,11 @@ export const MorphingText = forwardRef(function MorphingText(
       apply(second, fraction, k);
       apply(first, 1 - fraction, k);
 
-      first.textContent = texts[index % texts.length];
-      second.textContent = texts[(index + 1) % texts.length];
+      if (pairRef.current !== index) {
+        first.textContent = texts[index % texts.length];
+        second.textContent = texts[(index + 1) % texts.length];
+        pairRef.current = index;
+      }
     },
     [texts],
   );
@@ -109,20 +164,47 @@ export const MorphingText = forwardRef(function MorphingText(
   useImperativeHandle(
     ref,
     () => ({
-      // progress — 0..1 по всей секции; делим его на переходы между фразами.
+      // Safari reports native scrolling in visibly uneven increments. Keep the
+      // original gooey formulas, but feed them a short damped progression so the
+      // blur and alpha threshold move continuously between those increments.
       setProgress(progress) {
-        const spans = texts.length - 1;
-        if (spans < 1) {
-          setStyles(1, 0);
-          return;
-        }
-        const scaled = clamp01(progress) * spans;
-        const segment = Math.min(Math.floor(scaled), spans - 1);
-        setStyles(smoothstep(MORPH_START, MORPH_END, scaled - segment), segment);
+        targetProgressRef.current = clamp01(progress);
+        if (scrollFrameRef.current) return;
+
+        scrollTimeRef.current = performance.now();
+        const tick = (now) => {
+          const dt = Math.min(0.05, (now - scrollTimeRef.current) / 1000);
+          scrollTimeRef.current = now;
+          const target = targetProgressRef.current;
+          const current = displayedProgressRef.current;
+          const next = current + (target - current) * (1 - Math.exp(-SCROLL_EASING * dt));
+          displayedProgressRef.current = Math.abs(target - next) < 0.0001 ? target : next;
+
+          const spans = texts.length - 1;
+          if (spans < 1) {
+            setStyles(1, 0);
+          } else {
+            const scaled = displayedProgressRef.current * spans;
+            const segment = Math.min(Math.floor(scaled), spans - 1);
+            setStyles(smoothstep(MORPH_START, MORPH_END, scaled - segment), segment);
+          }
+
+          if (displayedProgressRef.current === targetProgressRef.current) {
+            scrollFrameRef.current = 0;
+            return;
+          }
+          scrollFrameRef.current = requestAnimationFrame(tick);
+        };
+        scrollFrameRef.current = requestAnimationFrame(tick);
       },
     }),
     [setStyles, texts.length],
   );
+
+  useEffect(() => () => {
+    if (scrollFrameRef.current) cancelAnimationFrame(scrollFrameRef.current);
+    scrollFrameRef.current = 0;
+  }, []);
 
   useEffect(() => {
     if (!autoplay) return undefined;
@@ -174,7 +256,8 @@ export const MorphingText = forwardRef(function MorphingText(
   }, [autoplay, setStyles]);
 
   return (
-    <div className={`morphing-text ${className}`.trim()} ref={rootRef}>
+    <div className={`morphing-text ${className}`.trim()} ref={rootRef} role="img" aria-label={texts.join('. ')}>
+      <canvas ref={canvasRef} className="morphing-text__canvas" aria-hidden="true" />
       <span className="morphing-text__line" ref={text1Ref} />
       <span className="morphing-text__line" ref={text2Ref} />
 

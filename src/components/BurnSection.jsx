@@ -21,6 +21,7 @@ export function BurnSection({ src }) {
 
     const scene = new BurnScene(canvas, { src, smoothing: 0.12 });
     sceneRef.current = scene;
+    section.dataset.burnComplete = 'false';
 
     let visible = false;
     const visibility = new IntersectionObserver(
@@ -38,8 +39,10 @@ export function BurnSection({ src }) {
     const removeTrack = addTrack({
       measure() {},
       render() {
-        if (!visible) return;
-        scene.render((performance.now() - startedAt) / 1000);
+        if (visible) scene.render((performance.now() - startedAt) / 1000);
+        else scene.progress = scene.target; // Keep the gate correct after fast scrolls past Process.
+        const complete = scene.progress >= 0.985 ? 'true' : 'false';
+        if (section.dataset.burnComplete !== complete) section.dataset.burnComplete = complete;
       },
     });
 

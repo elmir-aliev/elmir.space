@@ -12,8 +12,13 @@ const PETAL_DURATION = (PETAL_END_STEP - PETAL_START_STEP) / FPS;
 // The scroll flowers deliberately use the very same feedback shader and timing as
 // HeroFlowers. The only extra work here is cropping/rotating the accumulated
 // texture so a hero flower can sit on a branch instead of filling the whole hero.
-export function createScrollFlowerRenderer(canvas, flowers) {
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+export function createScrollFlowerRenderer(canvas, flowers, flowerCanvases) {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: false,
+    preserveDrawingBuffer: true,
+  });
   renderer.setClearColor(0, 0);
   renderer.autoClear = false;
 
@@ -88,16 +93,19 @@ export function createScrollFlowerRenderer(canvas, flowers) {
 
   const states = flowers.map(() => ({
     step: PETAL_START_STEP,
+    drawnStep: -1,
+    drawnAngle: null,
     activatedAt: null,
     wasActive: false,
     targets: [
-      new THREE.WebGLRenderTarget(512, 512),
-      new THREE.WebGLRenderTarget(512, 512),
+      new THREE.WebGLRenderTarget(256, 256),
+      new THREE.WebGLRenderTarget(256, 256),
     ],
   }));
 
-  let width = 0;
-  let height = 0;
+  const outputSize = 256;
+  renderer.setPixelRatio(1);
+  renderer.setSize(outputSize, outputSize, false);
 
   function clearState(state) {
     renderer.setScissorTest(false);
@@ -107,25 +115,23 @@ export function createScrollFlowerRenderer(canvas, flowers) {
     }
     renderer.setRenderTarget(null);
     state.step = PETAL_START_STEP;
+    state.drawnStep = -1;
+    state.drawnAngle = null;
   }
 
   states.forEach(clearState);
 
   return {
     draw(placements, progress, reducedMotion = false) {
-      if (width !== window.innerWidth || height !== window.innerHeight) {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setSize(width, height, false);
-      }
-
       renderer.setRenderTarget(null);
       renderer.setScissorTest(false);
-      renderer.setViewport(0, 0, width, height);
-      renderer.clear();
+      renderer.setViewport(0, 0, outputSize, outputSize);
 
       const now = performance.now();
+      // A flower that was covered by the Friz card used to replay all missed
+      // feedback frames synchronously when it became visible again. Spread that
+      // work across RAFs instead of blocking one scroll frame.
+      let feedbackBudget = reducedMotion ? Number.POSITIVE_INFINITY : 8;
 
       placements.forEach((box, index) => {
         if (!box) return;
@@ -143,6 +149,8 @@ export function createScrollFlowerRenderer(canvas, flowers) {
           // hero-style opening animation every time the user scrolls down again.
           if (state.activatedAt !== null) {
             clearState(state);
+            const flowerCanvas = flowerCanvases[index];
+            flowerCanvas?.getContext('2d')?.clearRect(0, 0, flowerCanvas.width, flowerCanvas.height);
             state.activatedAt = null;
           }
           state.wasActive = false;
@@ -154,8 +162,6 @@ export function createScrollFlowerRenderer(canvas, flowers) {
           state.activatedAt = now;
         }
         state.wasActive = true;
-
-        if (box.y + box.size < 0 || box.y > height) return;
 
         const elapsed = reducedMotion
           ? PETAL_DURATION
@@ -169,8 +175,9 @@ export function createScrollFlowerRenderer(canvas, flowers) {
 
         grow.uniforms.u_stop_randomizer.value.set(...flower.seed);
 
-        while (state.step < desired) {
+        while (state.step < desired && feedbackBudget > 0) {
           state.step += 1;
+          feedbackBudget -= 1;
           grow.uniforms.u_stop_time.value = state.step / FPS;
           grow.uniforms.u_texture.value = state.targets[0].texture;
 
@@ -181,19 +188,35 @@ export function createScrollFlowerRenderer(canvas, flowers) {
           state.targets.reverse();
         }
 
-        renderer.setRenderTarget(null);
-        const y = height - box.y - box.size;
-        renderer.setViewport(box.x, y, box.size, box.size);
-        renderer.setScissor(box.x, y, box.size, box.size);
-        renderer.setScissorTest(true);
+        const flowerCanvas = flowerCanvases[index];
+        if (!flowerCanvas || (
+          state.drawnStep === state.step
+          && state.drawnAngle === box.angle
+        )) return;
 
+        renderer.setRenderTarget(null);
+        renderer.setViewport(0, 0, outputSize, outputSize);
+        renderer.clear();
         display.uniforms.u_texture.value = state.targets[0].texture;
         display.uniforms.u_extent.value = (.03 + flower.seed[0] * .1) * 2.8;
         display.uniforms.u_angle.value = box.angle;
         renderer.render(output, camera);
+
+        const context = flowerCanvas.getContext('2d');
+        context.clearRect(0, 0, flowerCanvas.width, flowerCanvas.height);
+        context.drawImage(canvas, 0, 0, flowerCanvas.width, flowerCanvas.height);
+        state.drawnStep = state.step;
+        state.drawnAngle = box.angle;
       });
 
       renderer.setScissorTest(false);
+    },
+
+    invalidate() {
+      states.forEach((state) => {
+        state.drawnStep = -1;
+        state.drawnAngle = null;
+      });
     },
 
     dispose() {
