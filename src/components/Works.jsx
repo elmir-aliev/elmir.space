@@ -1,12 +1,11 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useScrollProgress } from '../scroll/useScrollProgress';
 import frizMain from '../assets/works/friz-intro.png';
-import frizCase from '../assets/works/friz-card-case.webp';
-import frizHero from '../assets/works/friz-card-hero.webp';
-import frizAfter from '../assets/works/friz-card-after.webp';
-import frizHarizma from '../assets/works/friz-card-harizma.webp';
+import frizVideo1 from '../assets/works/friz-showcase-01.mp4';
+import frizVideo2 from '../assets/works/friz-showcase-02.mp4';
+import frizVideo3 from '../assets/works/friz-showcase-03.mp4';
 
 const featuredWork = {
   title: 'Friz',
@@ -14,18 +13,12 @@ const featuredWork = {
   image: frizMain,
 };
 
-const media = [
-  { src: frizCase, alt: 'Встроенная мебель из проекта Friz' },
-  { src: frizHero, alt: 'Мягкая мебель в интерьере Friz' },
-  { src: frizAfter, alt: 'Кухня и обеденная зона Friz' },
-];
+const showcaseVideos = [frizVideo1, frizVideo2, frizVideo3];
 
 const ZOOM_DURATION = 900;
 const SCRUB = 0.8;
 const REVEAL_START = 'top 96%';
 const REVEAL_END = 'top 34%';
-const CLIP_FROM = 'inset(14% 6% 14% 6% round 10px)';
-const CLIP_TO = 'inset(0% 0% 0% 0% round 10px)';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -34,8 +27,6 @@ function revealWork(section) {
   const work = section.querySelector('.featured-work');
   const hero = work.querySelector('.featured-work__hero');
   const content = work.querySelectorAll('.featured-work__content > *');
-  const summary = work.querySelector('.featured-work__summary');
-  const mediaItems = work.querySelectorAll('.featured-work__media');
 
   gsap
     .timeline({
@@ -52,8 +43,8 @@ function revealWork(section) {
     .fromTo(work, { y: 88 }, { y: 0, duration: 1 }, 0)
     .fromTo(
       hero,
-      { clipPath: CLIP_FROM, '--zoom': 1.18, opacity: 0 },
-      { clipPath: CLIP_TO, '--zoom': 1, opacity: 1, duration: 0.75 },
+      { scale: .92, opacity: 0 },
+      { scale: 1, opacity: 1, duration: .75 },
       0,
     )
     .fromTo(
@@ -62,32 +53,6 @@ function revealWork(section) {
       { y: 0, opacity: 1, duration: 0.42, stagger: 0.07 },
       0.48,
     );
-
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    gsap
-      .timeline({
-        scrollTrigger: {
-          trigger: summary,
-          start: 'top 88%',
-          end: 'top 30%',
-          scrub: 0.9,
-          invalidateOnRefresh: true,
-        },
-        defaults: { ease: 'none' },
-      })
-      .fromTo(
-        mediaItems,
-        { width: 0, marginLeft: 0, marginRight: 0 },
-        {
-          width: (_index, target) => getComputedStyle(target).getPropertyValue('--media-width'),
-          marginLeft: '0.08em',
-          marginRight: '0.08em',
-          duration: 0.4,
-          stagger: 0.5,
-          ease: 'power2.out',
-        },
-      );
-  }
 }
 
 function zoomInto(frame, work) {
@@ -110,6 +75,59 @@ function zoomInto(frame, work) {
   document.body.classList.add('is-zooming');
 
   window.setTimeout(() => window.location.assign(work.url), ZOOM_DURATION);
+}
+
+function FrizShowcase({ frameRef, onOpen }) {
+  const [active, setActive] = useState(0);
+  const videos = useRef([]);
+
+  useEffect(() => {
+    videos.current.forEach((video, index) => {
+      if (!video) return;
+      if (index === active || video.ended) video.currentTime = 0;
+      video.play().catch(() => {});
+    });
+  }, [active]);
+
+  const handleEnded = (index) => {
+    if (index !== active) return;
+    setActive((index + 1) % showcaseVideos.length);
+  };
+
+  return (
+    <a
+      className="featured-work__main-link"
+      href={featuredWork.url}
+      onClick={onOpen}
+      aria-label="Открыть сайт Friz"
+    >
+      <div ref={frameRef} className="featured-work__hero featured-work__showcase">
+        <div className="featured-work__orbit" aria-hidden="true">
+          {showcaseVideos.map((src, index) => {
+            const position = (index - active + showcaseVideos.length) % showcaseVideos.length;
+            const state = position === 0 ? 'active' : position === 1 ? 'next' : 'previous';
+            return (
+              <div className={`featured-work__video-card is-${state}`} key={src}>
+                <div className="featured-work__video-surface">
+                  <video
+                    ref={(node) => { videos.current[index] = node; }}
+                    src={src}
+                    muted
+                    playsInline
+                    autoPlay
+                    loop={index !== active}
+                    preload="metadata"
+                    onEnded={() => handleEnded(index)}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <span className="featured-work__open">Открыть сайт ↗</span>
+      </div>
+    </a>
+  );
 }
 
 export function Works() {
@@ -136,56 +154,21 @@ export function Works() {
       </header>
 
       <article ref={workRef} className="featured-work">
-        <div className="featured-work__gallery">
-          <a
-            className="featured-work__main-link"
-            href={featuredWork.url}
-            onClick={handleOpen}
-            aria-label="Открыть сайт Friz"
-          >
-            <div ref={heroRef} className="featured-work__hero">
-              <img src={frizMain} alt="Главный экран сайта Friz" />
-              <span className="featured-work__open">Открыть сайт ↗</span>
-            </div>
-          </a>
-
-          <p className="featured-work__summary">
-            От {' '}<Media item={media[1]} /> удивительной мебели
-             до невероятных сочетаний цветов {' '}<Media item={media[2]} /> и материалов
-          </p>
-        </div>
-
         <div className="featured-work__content">
           <div className="featured-work__intro">
-            <p className="featured-work__eyebrow">Digital / 2026</p>
             <h3>Friz</h3>
+            <p className="featured-work__description">
+              Цифровой каталог для Friz, который переводит характер мебельного бренда
+              в плавную навигацию, выразительную подачу коллекций и запоминающийся
+              визуальный опыт.
+            </p>
           </div>
-
-          <dl className="featured-work__facts">
-            <div>
-              <dt>Роль</dt>
-              <dd>Frontend-разработчик</dd>
-            </div>
-            <div>
-              <dt>Стек</dt>
-              <dd>React, Vite, GSAP, Lenis</dd>
-            </div>
-            <div>
-              <dt>Формат</dt>
-              <dd>Digital</dd>
-            </div>
-          </dl>
         </div>
 
+        <div className="featured-work__gallery">
+          <FrizShowcase frameRef={heroRef} onOpen={handleOpen} />
+        </div>
       </article>
     </section>
-  );
-}
-
-function Media({ item }) {
-  return (
-    <span className="featured-work__media" aria-label={item.alt} role="img">
-      <img src={item.src} alt="" />
-    </span>
   );
 }

@@ -3,7 +3,7 @@
   src: url('../assets/fonts/classic-russian/classicrussian.ttf') format('truetype');
   font-weight: 100 499;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {

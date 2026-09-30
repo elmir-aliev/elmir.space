@@ -24,6 +24,8 @@ export function IronhillWipe({ heroRef }) {
       return undefined;
     }
 
+    canvas.style.opacity = '0';
+
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     const geometry = new THREE.PlaneGeometry(2, 2);
@@ -71,6 +73,8 @@ export function IronhillWipe({ heroRef }) {
         if (Math.abs(next - progress) < 0.0001) return;
         progress = next;
         material.uniforms.uProgress.value = progress;
+        const visibleProgress = Math.min(Math.max((progress - 0.4) / 0.15, 0), 1);
+        canvas.style.opacity = `${visibleProgress * visibleProgress * (3 - 2 * visibleProgress)}`;
         renderer.render(scene, camera);
       },
     });
