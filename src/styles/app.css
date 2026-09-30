@@ -1075,7 +1075,7 @@ a {
   line-height: 1.08;
   letter-spacing: -0.025em;
   font-weight: 400;
-  color: #c1d4e7;
+  color: --text;
 }
 
 .contact__title span {
