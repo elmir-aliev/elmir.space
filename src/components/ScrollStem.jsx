@@ -21,6 +21,7 @@ const FLOWER_DATA = [
   { seed:[.66,.85], path:'secondary', pathProgress:.80, animation:.88, side:1, scale:.72, tree:true, fan:1 },
   { seed:[.77,.79], path:'secondary', pathProgress:.91, animation:.92, side:-1, scale:.78, tree:true, fan:-1, leader:true },
   { seed:[.7,.91], path:'secondary', pathProgress:.91, animation:.96, side:-1, scale:.7, tree:true, fan:1 },
+  { seed:[.74,.83], path:'secondary', pathProgress:1, animation:.985, side:1, scale:.82, terminal:true },
 ];
 const BRANCH_GROWTH=.025;
 // Leave scroll room for terminal shoots after the trunk reaches the bottom.
@@ -84,9 +85,10 @@ export function ScrollStem() {
     const stack=document.querySelector('#stack');
     const process=document.querySelector('#process');
     const contact=document.querySelector('#contact');
+    const footer=document.querySelector('.site-footer');
     const frame=document.querySelector('.featured-work__hero');
     const open=document.querySelector('.featured-work__open');
-    if(!root||!main||!hero||!works||!stack||!process||!contact||!frame||!open)return undefined;
+    if(!root||!main||!hero||!works||!stack||!process||!contact||!footer||!frame||!open)return undefined;
 
     let renderer;
     try { renderer=createScrollFlowerRenderer(canvasRef.current,flowers,flowerCanvases.current); }
@@ -102,7 +104,7 @@ export function ScrollStem() {
       if(Math.abs(window.innerWidth-layoutWidth)>48){layoutWidth=window.innerWidth;viewportHeight=window.innerHeight;}
       mainTop=main.getBoundingClientRect().top+window.scrollY;
       top=hero.offsetTop+(hero.offsetHeight-viewportHeight)*.69;
-      const height=Math.max(1,contact.offsetTop+contact.offsetHeight-top);
+      const height=Math.max(1,footer.offsetTop+footer.offsetHeight-top);
       primaryStart=top+mainTop;
       secondaryStart=process.offsetTop+process.offsetHeight+mainTop-viewportHeight;
       secondaryEnd=contact.offsetTop+contact.offsetHeight+mainTop-viewportHeight;
@@ -121,7 +123,9 @@ export function ScrollStem() {
       root.style.top=`${top}px`;root.style.height=`${height}px`;
       svgRef.current.setAttribute('viewBox',`0 0 ${width} ${height}`);
       const primaryD=primaryRoute(width,viewportHeight*.5,works.offsetTop-top,card,button);
-      const secondaryD=secondaryRoute(width,height,burnStartY,contactY);
+      const contactBottomY=contact.offsetTop+contact.offsetHeight-top;
+      const footerEndY=footer.offsetTop+footer.offsetHeight-top-Math.max(72,width*.055);
+      const secondaryD=secondaryRoute(width,contactBottomY,burnStartY,contactY);
       primaryRef.current.setAttribute('d',primaryD);primaryCoreRef.current.setAttribute('d',primaryD);
       secondaryRef.current.setAttribute('d',secondaryD);secondaryCoreRef.current.setAttribute('d',secondaryD);
 
@@ -130,10 +134,19 @@ export function ScrollStem() {
         const path=flower.path==='primary'?primaryRef.current:secondaryRef.current;
         const {p,tx,ty}=pointData(path,flower.pathProgress);
         const nx=-ty*flower.side,ny=tx*flower.side;
-        const size=(width<768?80:112)*flower.scale;
+        const size=(width<768?90:126)*flower.scale;
         let x,y,d,tipTx,tipTy;
 
-        if(flower.tree){
+        if(flower.terminal){
+          // A separate final shoot continues below the unchanged contact tree.
+          x=width*(width<768?.88:.86);y=footerEndY;
+          const bend=Math.max(120,(y-p.y)*.42);
+          const c1x=p.x-width*.04,c1y=p.y+bend*.34;
+          const c2x=x-width*.18,c2y=y-bend*.22;
+          d=`M ${p.x} ${p.y} C ${c1x} ${c1y} ${c2x} ${c2y} ${x} ${y}`;
+          const tipLength=Math.max(.001,Math.hypot(x-c2x,y-c2y));
+          tipTx=(x-c2x)/tipLength;tipTy=(y-c2y)/tipLength;
+        } else if(flower.tree){
           const group=`${flower.pathProgress}-${flower.side}`;
           let limb=limbs.get(group);
           const reach=Math.min(width*.3,width<768?125:290)*(1.1-flower.pathProgress*.25);
@@ -168,8 +181,8 @@ export function ScrollStem() {
           d=`M ${origin.x} ${origin.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${x} ${y}`;
           const tipLength=Math.max(.001,Math.hypot(x-c2.x,y-c2.y));
           tipTx=(x-c2.x)/tipLength;tipTy=(y-c2.y)/tipLength;
-          branchBacks.current[index].style.strokeWidth=flower.leader?'3.8':'2.5';
-          branchCores.current[index].style.strokeWidth=flower.leader?'1.6':'1';
+          branchBacks.current[index].style.strokeWidth=flower.leader?'4.4':'3';
+          branchCores.current[index].style.strokeWidth=flower.leader?'1.9':'1.2';
         } else {
           const branchLength=(width<768?66:108)*(0.9+flower.seed[0]*.2);
           const forward=branchLength*.9,spread=branchLength*.38;
