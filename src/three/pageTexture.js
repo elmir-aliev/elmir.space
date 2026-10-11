@@ -8,8 +8,6 @@ export function createPageTexture({ width = 1800, height = 1125 } = {}) {
   const ctx = canvas.getContext('2d');
   const pad = width * 0.075;
 
-  // Фон страницы — ровно фон сайта (--bg): иначе холст читается как более
-  // тёмный (или тёплый) прямоугольник поверх секции.
   ctx.fillStyle = '#0f1115';
   ctx.fillRect(0, 0, width, height);
 

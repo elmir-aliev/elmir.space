@@ -7,10 +7,6 @@ import { AsciiFilm } from "./AsciiFilm";
 const COLS_WIDE = 300;
 const COLS_NARROW = 150;
 
-// Кадр всегда разбирается на сетке 300 колонок: пороги ключевания (KEY_STEP,
-// EDGE_LIMIT, MIN_ISLAND) подобраны под неё, на 150 колонках край крышки ноутбука
-// размывался и заливка то съедала крышку, то не доходила до стены слева от неё.
-// Экранная сетка берётся из разобранной усреднением по блоку.
 const ANALYSIS_COLS = COLS_WIDE;
 
 const ROW_RATIO = (704 / 1248) * 0.6;
@@ -39,23 +35,15 @@ const KEY_LEAVE = 0.38;
 
 const NOISE = ".,:;=+*oO#%@";
 
-// Первый экран сначала живёт как glyph-matrix (magicui): сетка случайных знаков,
-// каждая клетка с вероятностью MATRIX_RATE меняется раз в MATRIX_TICK мс.
 const MATRIX_GLYPHS = "01·•+*/\\<>=";
 const MATRIX_RATE = 0.012;
 const MATRIX_TICK = 120;
-// Матрица живёт не меньше MATRIX_HOLD мс с монтирования, потом растворяется.
 const MATRIX_HOLD = 1400;
-// Как у magicui: у каждой клетки своя прозрачность (часть знаков почти чёрные),
-// при мутации она разыгрывается заново, к низу сетка гаснет на MATRIX_FADE.
 const MATRIX_COLOR = "243, 240, 234";
 const MATRIX_ALPHA_MIN = 0.08;
 const MATRIX_ALPHA_SPREAD = 0.55;
 const MATRIX_FADE = 0.6;
 
-// Растворение: каждая клетка получает свой порог DROP; когда прогресс перевалил
-// через него, серый знак матрицы гаснет, а на месте фигуры вспыхивает шум и
-// через SCRAMBLE оседает в знак видео. Порог — смесь случая и разворота слева направо.
 const DISSOLVE = 1.8;
 const DISSOLVE_NOISE = 0.55;
 const SCRAMBLE = 0.1;
@@ -89,9 +77,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
   const filmRef = useRef(null);
   const settledRef = useRef(onSettled);
 
-  // Видео держится и в ref, и в состоянии: ref — чтобы им управлял цикл,
-  // состояние — чтобы сцена AsciiFilm смонтировалась уже после элемента,
-  // который получает пропом.
   const [mounted, setMounted] = useState(null);
   const attachVideo = useCallback((node) => {
     videoRef.current = node;
@@ -106,8 +91,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
   useEffect(() => {
     settledRef.current = onSettled;
   }, [onSettled]);
-
-
 
   useEffect(() => {
     const root = rootRef.current;
@@ -127,8 +110,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const aRows = ANALYSIS_ROWS;
     const aSize = aCols * aRows;
 
-    // Разобранный кадр приезжает с GPU: RGB — цвет для ключевания,
-    // альфа — резкость, из неё берётся плотность знака.
     let pixels = null;
 
     const back = new Uint8Array(aSize);
@@ -313,9 +294,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
       ease();
     };
 
-    // Свежий кадр: даунскейл, светлота, unsharp и цветовая подложка считаются
-    // на GPU (см. AsciiFilm), сюда возвращается готовый буфер сетки разбора,
-    // и на CPU остаётся только маска фона.
     const analyze = () => {
       const data = filmRef.current?.analyze();
       if (!data) return false;
@@ -324,9 +302,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
       return true;
     };
 
-    // Сборка строк по разобранному кадру. t — прогресс растворения матрицы:
-    // клетка с порогом выше t ещё принадлежит матрице и здесь пуста.
-    // Границы блока разобранной сетки для каждой экранной колонки и строки.
     const span = (count, total) => {
       const from = new Int32Array(count);
       const to = new Int32Array(count);
@@ -340,8 +315,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const [y0, y1] = span(rows, aRows);
 
     const compose = (t) => {
-      // Кадра может ещё не быть: первый асинхронный readback приходит на разбор
-      // позже, а растворение к этому моменту уже могло закончиться.
       if (!pixels) return;
 
       const chars = DENSITY_RAMP;
@@ -359,7 +332,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
             continue;
           }
 
-          // Блок разобранной сетки: клетка — фигура, если фигуры в блоке не меньше половины.
           let hidden = 0;
           let total = 0;
           let sum = 0;
@@ -391,12 +363,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
       }
     };
 
-    // ---- Матрица: canvas с сеткой тех же клеток, накрывающий весь первый экран. ----
-    // Её сетка совмещена с сеткой видео: клетка (x, y) кадра — это клетка
-    // (x + kx, y + ky) матрицы, поэтому знак гаснет ровно там, где вспыхивает.
-    // Рисуется по клеткам: полная отрисовка один раз, дальше только мутации
-    // (перерисовать клетку) и растворение (стереть клетку). Живёт около трёх
-    // секунд от загрузки, поэтому и остаётся на 2d-холсте.
     const mctx = matrix.getContext("2d");
     let mCols = 0;
     let mRows = 0;
@@ -469,7 +435,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
       matrix.height = Math.ceil(height * dpr);
       mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Тот же шрифт, что у знаков видео; базовая линия — как в строке с line-height: 1.
       const font = getComputedStyle(pre);
       mctx.font = `${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
       mctx.textBaseline = "alphabetic";
@@ -504,7 +469,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
       for (let i = 0; i < total; i += 1) drawCell(i);
     };
 
-    // Стирает клетки, чей порог перевалил прогресс растворения.
     const renderMatrix = (t) => {
       const total = mGone.length;
       for (let i = 0; i < total; i += 1) {
@@ -526,7 +490,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
       }
     };
 
-    // ---- Фазы: matrix → dissolve → play ----
     const state = { t: 0 };
     let phase = "matrix";
     let drawnFrame = -1;
@@ -546,8 +509,6 @@ export function AsciiVideo({ paused = false, onSettled }) {
     const loop = () => {
       frame = requestAnimationFrame(loop);
       const current = (video.currentTime * FPS) | 0;
-      // Кадр считается разобранным только если сцена уже смонтирована:
-      // <Canvas> поднимается своим корнем и готов на кадр-другой позже.
       const fresh = current !== drawnFrame && analyze();
       if (fresh) drawnFrame = current;
       if (phase === "dissolve") {
@@ -600,21 +561,11 @@ export function AsciiVideo({ paused = false, onSettled }) {
     };
   }, [cols, rows, mounted]);
 
-// Корень R3F поднимается вручную через createRoot, а не через <Canvas>:
-  // <Canvas> ради JSX-каталога делает extend(THREE) и тянет в сборку весь
-  // three целиком (+57 кБ gzip на замере 07.09.2026). Здесь вся сцена — один
-  // <primitive>, каталог не нужен, и three остаётся оттрясённым.
-  //
-  // Размер холста задаёт кадр, а его ширину — заполненный <pre>, поэтому
-  // сцена поднимается не сразу, а по первому ненулевому размеру от наблюдателя.
   useEffect(() => {
     const holder = colorRef.current;
     const video = videoRef.current;
     if (!holder || !video) return undefined;
 
-    // Холст свой на каждый подъём корня: контекст WebGL у холста один, и в
-    // StrictMode второй корень занял бы контекст первого, а отложенная на
-    // полсекунды уборка первого его бы и погасила.
     const canvas = document.createElement("canvas");
     canvas.style.cssText = "display:block;width:100%;height:100%";
     holder.appendChild(canvas);

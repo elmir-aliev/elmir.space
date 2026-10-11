@@ -1,18 +1,11 @@
-// Проходы разбора кадра для первого экрана. Все считают в байтах sRGB —
-// ровно те значения, что раньше приходили из getImageData, чтобы пороги
-// ключевания и уровни плотности остались прежними.
 
-// Насыщенность и подъём чёрной точки цветовой подложки.
 export const SATURATE = 1.35;
 export const LIFT = 0.48;
 
-// Unsharp по светлоте: радиус коробчатого размытия и сила подъёма.
 export const SHARPEN = 1.1;
 export const BLUR_RADIUS = 4;
 
-// Полноэкранный квад: PlaneGeometry(2, 2) уже лежит в клип-кубе,
-// матрицы камеры не нужны.
-export const quadVertexShader = /* glsl */ `
+export const quadVertexShader =  `
 varying vec2 vUv;
 
 void main() {
@@ -21,14 +14,7 @@ void main() {
 }
 `;
 
-// Даунскейл кадра в сетку разбора коробчатым фильтром по всей площадке,
-// которая приходится на клетку: без него LINEAR берёт четыре текселя из
-// четырёх с лишним и картинка сыплется на движении.
-//
-// Кадр кладётся в таргет вверх ногами: readPixels читает строки снизу вверх,
-// а разбору (как раньше getImageData) нужны сверху вниз. Обратный поворот —
-// в displayFragmentShader.
-export const analysisFragmentShader = /* glsl */ `
+export const analysisFragmentShader =  `
 precision highp float;
 
 uniform sampler2D uVideo;
@@ -55,10 +41,7 @@ void main() {
 }
 `;
 
-// Горизонтальная половина коробчатого размытия светлоты: берёт альфу разбора,
-// кладёт результат в красный канал. По краям таргет CLAMP_TO_EDGE — так же,
-// как раньше clamp() в JS.
-export const blurFragmentShader = /* glsl */ `
+export const blurFragmentShader =  `
 precision highp float;
 
 uniform sampler2D uSource;
@@ -75,9 +58,7 @@ void main() {
 }
 `;
 
-// Вертикальная половина размытия и сразу unsharp. На выход — кадр целиком:
-// RGB для ключевания, резкость в альфе. Этот таргет и уезжает на CPU.
-export const sharpenFragmentShader = /* glsl */ `
+export const sharpenFragmentShader =  `
 precision highp float;
 
 uniform sampler2D uAnalysis;
@@ -99,10 +80,7 @@ void main() {
 }
 `;
 
-// Видимая подложка: тот же разобранный кадр, растянутый на кадр билинейно,
-// с насыщенностью и подъёмом чёрной точки. Раньше это был попиксельный цикл
-// в JS и putImageData на каждый кадр.
-export const displayFragmentShader = /* glsl */ `
+export const displayFragmentShader =  `
 precision highp float;
 
 uniform sampler2D uAnalysis;

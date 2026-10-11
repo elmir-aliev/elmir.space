@@ -11,16 +11,7 @@ const phrases = [
   'Каждый инструмент здесь заработал своё место',
 ];
 
-/*
- * ox/oy — смещение логотипа от центра экрана в vw/vh на нулевой глубине (за краями экрана);
- * w — размер в px (на узком экране ограничен долей вьюпорта);
- * color — фирменный цвет из simple-icons; без него логотип цветом текста (Three.js чёрный, Lenis — слово);
- * z — глубина в px при --p = 0: камера отъезжает назад на TRAVEL за весь ход, логотип
- * входит с края, уменьшается и стягивается к центру. Все z отрицательные: пока секция
- * не начала прокручиваться, на экране ничего нет.
- */
 const TRAVEL = 5360;
-
 const tools = [
   { name: 'React', ox: -58, oy: -34, w: 225, z: -80, color: '#61dafb' },
   { name: 'Three.js', ox: 60, oy: 30, w: 255, z: -460 },
@@ -35,13 +26,10 @@ const tools = [
   { name: 'Rust', ox: -48, oy: -38, w: 190, z: -3880, color: '#dea584' },
   { name: 'Swift', ox: 56, oy: 38, w: 190, z: -4260, color: '#f05138' },
 ];
-
 const stackIconImages = { Rust: rustIcon, Swift: swiftIcon };
-
 function Logo({ name }) {
   const image = stackIconImages[name];
   if (image) return <img src={image} alt="" aria-hidden="true" />;
-
   const path = stackIcons[name.replace('.', '')];
   if (!path) return <span className="stack__wordmark">{name}</span>;
   return (
@@ -50,23 +38,17 @@ function Logo({ name }) {
     </svg>
   );
 }
-
 export function Stack() {
   const ref = useRef(null);
   const morphRef = useRef(null);
-
-  // Фразы ведёт прокрутка секции, а не таймер компонента: onChange вызывается
-  // из цикла скролл-движка, поэтому второго тикера не появляется.
   const handleProgress = useCallback((progress) => {
     morphRef.current?.setProgress(progress);
   }, []);
-
   useScrollProgress(ref, {
     mode: 'pinned',
     varName: '--p',
     onChange: handleProgress,
   });
-
   return (
     <section
       ref={ref}
@@ -81,7 +63,6 @@ export function Stack() {
           autoplay={false}
           className="stack__morph"
         />
-
         <ul className="stack__cards" aria-label="Библиотеки и инструменты">
           {tools.map((tool) => (
             <li

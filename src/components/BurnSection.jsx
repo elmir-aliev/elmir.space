@@ -13,7 +13,6 @@ export function BurnSection({ src }) {
   }, []);
 
   useScrollProgress(sectionRef, { mode: 'pinned', varName: '--p', onChange: handleProgress });
-
   useEffect(() => {
     const canvas = canvasRef.current;
     const section = sectionRef.current;
@@ -40,7 +39,7 @@ export function BurnSection({ src }) {
       measure() {},
       render() {
         if (visible) scene.render((performance.now() - startedAt) / 1000);
-        else scene.progress = scene.target; // Keep the gate correct after fast scrolls past Process.
+        else scene.progress = scene.target; 
         const complete = scene.progress >= 0.985 ? 'true' : 'false';
         if (section.dataset.burnComplete !== complete) section.dataset.burnComplete = complete;
       },
@@ -59,7 +58,6 @@ export function BurnSection({ src }) {
     <section ref={sectionRef} className="burn" id="process">
       <div className="burn__sticky">
         <div className="burn__reveal">
-          <p className="burn__kicker">Процесс</p>
           <h2 className="burn__title">
             Сжигаю всё лишнее,
             <br />

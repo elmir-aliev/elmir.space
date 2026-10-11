@@ -25,8 +25,6 @@ export function startScrollEngine(options = {}) {
       touchMultiplier: 1.4,
       ...options,
     });
-    // Для проверок в playwright: window.scrollTo Lenis доводит инерцией,
-    // точную позицию даёт только lenis.scrollTo(y, { immediate: true }).
     if (import.meta.env.DEV) window.__lenis = lenis;
     frameId = requestAnimationFrame(frame);
   }

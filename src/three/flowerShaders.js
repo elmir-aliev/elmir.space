@@ -1,13 +1,7 @@
-/*
- * Adapted from Draw With WebGL Flowers [2] by Ksenia Kondrashova.
- * https://codepen.io/ksenia-k/pen/RwqrxBG
- * MIT license: see FLOWERS-LICENSE.txt. Original growth and feedback mechanics.
- */
 export const flowerVertex = `
 varying vec2 vUv;
 void main() { vUv = uv; gl_Position = vec4(position, 1.); }
 `;
-
 export const flowerFragment = `
 uniform float u_ratio;
 uniform vec2 u_cursor;
@@ -91,9 +85,6 @@ void main() {
     gl_FragColor = vec4(color,1.);
 }
 `;
-
-// Standalone flower head used by the long scroll stem. The petal function is
-// shared verbatim with the hero shader; only the stems and feedback texture are omitted.
 export const flowerHeadFragment = `
 uniform vec2 u_seed;
 varying vec2 vUv;
@@ -122,7 +113,6 @@ void main() {
     gl_FragColor = vec4(ice,alpha);
 }
 `;
-
 export const flowerSpriteDisplay = `
 uniform sampler2D u_texture;
 varying vec2 vUv;
@@ -134,8 +124,6 @@ void main() {
     gl_FragColor = vec4(ice,alpha);
 }
 `;
-
-// Color grading is isolated from the original accumulating flower shader.
 export const flowerDisplay = `
 uniform sampler2D u_texture;
 varying vec2 vUv;

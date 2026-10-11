@@ -180,9 +180,6 @@ function drawBox(rect, label, picked) {
   layer.append(box, tag);
 }
 
-// Рамки перерисовываются на каждое наведение и прокрутку, список — только когда
-// меняется набор выбранных элементов: иначе пересборка строк сбрасывает прокрутку
-// списка и фокус в поле замечания.
 function renderBoxes() {
   layer.replaceChildren();
   selections.forEach((s, i) => {

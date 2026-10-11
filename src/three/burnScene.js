@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { burnVertexShader, burnFragmentShader } from "./burnShader";
 import { createPageTexture } from "./pageTexture";
 
-// Длинная сторона нарисованной страницы в пикселях текстуры.
 const PAGE_SIZE = 1800;
 
 export class BurnScene {
@@ -22,8 +21,6 @@ export class BurnScene {
     this.scene = new THREE.Scene();
     this.camera = new THREE.Camera();
 
-    // Без src страница рисуется на canvas под пропорции самого холста (см. resize):
-    // на телефоне в портрете иначе от «страницы» оставался бы вырезанный центр.
     this.generated = !src;
     this.texture = src
       ? new THREE.TextureLoader().load(src, (loaded) =>
@@ -95,9 +92,6 @@ export class BurnScene {
 
     this.texture?.dispose();
     this.texture = createPageTexture(size);
-    // Без этого three считает текстуру sRGB и переводит её в linear, а обратно
-    // на выходе не переводит: страница выходила почти чёрной (замер: 11,11,13
-    // в CSS → 1,1,1 на экране) и читалась как тёмный прямоугольник поверх секции.
     this.texture.colorSpace = THREE.NoColorSpace;
     this.material.uniforms.uTexture.value = this.texture;
     this.applyTextureSize(this.texture);

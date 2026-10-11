@@ -7,9 +7,7 @@ const links = [
   { id: 'contact', label: 'Контакты' },
 ];
 
-// Порог сдвига в px, после которого меняем направление — гасит дрожание.
 const DIRECTION_STEP = 6;
-// Ближе к верху страницы шапка видна всегда.
 const TOP_ZONE = 80;
 
 export function Header() {
@@ -20,7 +18,6 @@ export function Header() {
     scrollTo(`#${id}`);
   };
 
-  // Шапка показывается только при прокрутке вверх, при прокрутке вниз прячется.
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;

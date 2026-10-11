@@ -3,8 +3,6 @@ import * as THREE from 'three';
 const vertexShader = `varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`;
 const weights = `float weight(float x){return exp(-.5*x*x);}`;
 
-// Three small GPU passes replace animated CSS blur + SVG filter rasterization.
-// Text textures are uploaded only after font loading or a real size change.
 export function createTextMorphRenderer(canvas, root, texts) {
   const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:false, depth:false });
   renderer.setPixelRatio(1);
@@ -45,7 +43,6 @@ export function createTextMorphRenderer(canvas, root, texts) {
     void main(){
       vec2 masks=texture2D(source,vUv).rg*opacity;
       float alpha=masks.y+masks.x*(1.-masks.y);
-      // Same alpha threshold as the original feColorMatrix, with a narrow AA edge.
       float edge=max(fwidth(alpha)*.75,.004);
       alpha=smoothstep(140./255.-edge,140./255.+edge,alpha);
       alpha=mix(alpha,texture2D(sharp,vUv).a,endpoint);
@@ -69,14 +66,12 @@ export function createTextMorphRenderer(canvas, root, texts) {
     });
     const lineHeight=parseFloat(style.lineHeight)||parseFloat(style.fontSize);
     const padding=52*parseFloat(style.fontSize)/64;
-    // One stable height for every phrase, including room for the blur halo.
     root.style.minHeight=`${Math.ceil(Math.max(...wrapped.map(lines=>lines.length))*lineHeight+padding)}px`;
     const height=Math.round(root.clientHeight);
     const next=[width,height,style.font,style.letterSpacing,style.color,style.textTransform].join('|');
     if (!width || !height || signature===next) return;
     signature=next; lastKey='';
     textures.forEach(t=>t.dispose());targets.forEach(t=>t.dispose());
-    // Cap surface resolution, independent of phone DPR.
     const dpr=Math.min(window.devicePixelRatio||1,1.5);
     const w=Math.round(width*dpr),h=Math.round(height*dpr);
     renderer.setSize(w,h,false);
@@ -100,7 +95,6 @@ export function createTextMorphRenderer(canvas, root, texts) {
     if(!textures.length)return;
     const key=`${index}:${fraction.toFixed(5)}`;if(key===lastKey)return;lastKey=key;
     const a=textures[index%textures.length],b=textures[(index+1)%textures.length];
-    // Preserve MagicUI's reciprocal blur and alpha equations, not a crossfade.
     const blur=f=>Math.min(26,f>0?8/f-8:26)*scale;
     horizontal.uniforms.a.value=a;horizontal.uniforms.b.value=b;
     horizontal.uniforms.sigma.value.set(blur(1-fraction),blur(fraction));

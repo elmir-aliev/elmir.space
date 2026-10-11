@@ -73,8 +73,7 @@ export function IronhillWipe({ heroRef }) {
         if (Math.abs(next - progress) < 0.0001) return;
         progress = next;
         material.uniforms.uProgress.value = progress;
-        const visibleProgress = Math.min(Math.max((progress - 0.4) / 0.15, 0), 1);
-        canvas.style.opacity = `${visibleProgress * visibleProgress * (3 - 2 * visibleProgress)}`;
+        canvas.style.opacity = progress > 0.001 ? '1' : '0';
         renderer.render(scene, camera);
       },
     });

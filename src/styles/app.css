@@ -15,48 +15,30 @@
   --font-accent: "Classic Russian", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, "Cascadia Mono", monospace;
 
-  /* Единая жидкая шкала — единственный источник размеров (08.09.2026).
-     В правилах ниже не должно быть ни одного clamp() или кегля в px по месту:
-     промежуточные значения не берутся, всё масштабируется согласованно.
-
-     Полоса — 360…1600px. Ступени подогнаны так, что на 390 и на 1440 дают
-     ровно те кегли, что стояли до введения шкалы, — переход на токены ничего
-     не сдвинул, изменилось только поведение на краях.
-
-     Середина формулы — `rem + vw`, а не чистые vw: rem-слагаемое тянется за
-     системным шрифтом и зумом браузера, поэтому набор растёт вместе с ними,
-     а не остаётся приколоченным к ширине окна. */
-  --step--2: clamp(0.809rem, 0.766rem + 0.19vw, 0.957rem); /* 13 → 15  подписи, мета */
-  --step--1: clamp(0.871rem, 0.829rem + 0.19vw, 1.019rem); /* 14 → 16  меню, интерфейс */
-  --step-0: clamp(0.932rem, 0.868rem + 0.29vw, 1.154rem); /* 15 → 18  базовый текст */
-  --step-1: clamp(1.114rem, 0.986rem + 0.57vw, 1.557rem); /* 18 → 25  лид, крупный текст */
-  --step-2: clamp(1.232rem, 1.018rem + 0.95vw, 1.97rem); /* 20 → 31  заголовок секции */
-  --step-3: clamp(1.814rem, 1.086rem + 3.24vw, 4.324rem); /* 29 → 69 */
-  --step-4: clamp(2.026rem, 0.842rem + 5.27vw, 6.106rem); /* 32 → 98 */
-  --step-5: clamp(2.263rem, 0.917rem + 5.98vw, 6.898rem); /* 36 → 110 */
-  --step-6: clamp(2.823rem, 2.205rem + 2.75vw, 4.955rem); /* 45 → 79  первый экран */
-
-  --space-nav: clamp(1.089rem, 0.661rem + 1.9vw, 2.565rem); /* 17 → 41 */
-  /* Вертикальный ритм ведёт высота экрана, а не ширина: формулы прежние,
-     границы переведены в rem, чтобы тянулись за системным шрифтом. */
-  --space-v-s: clamp(1.75rem, 4vh, 3.5rem); /* 28 → 56 */
-  --space-v-m: clamp(2.5rem, 7vh, 5rem); /* 40 → 80 */
-  --space-v-l: clamp(5rem, 12vh, 10rem); /* 80 → 160 */
-  --space-v-xl: clamp(6.25rem, 16dvh, 12.5rem); /* 100 → 200 */
-  --space-stagger: clamp(0rem, 10vh, 7.5rem); /* 0 → 120, сдвиг чётных карточек */
-  --space-grid: clamp(1.671rem, 0.729rem + 4.19vw, 4.919rem); /* 27 → 79 */
-  /* Поле страницы. Имя оставлено прежним: подставляется в десятке правил. */
-  --pad: clamp(1.157rem, 0.043rem + 4.95vw, 4.995rem); /* 18 → 80 */
-
+  --step--2: clamp(0.809rem, 0.766rem + 0.19vw, 0.957rem); 
+  --step--1: clamp(0.871rem, 0.829rem + 0.19vw, 1.019rem); 
+  --step-0: clamp(0.932rem, 0.868rem + 0.29vw, 1.154rem); 
+  --step-1: clamp(1.114rem, 0.986rem + 0.57vw, 1.557rem); 
+  --step-2: clamp(1.232rem, 1.018rem + 0.95vw, 1.97rem); 
+  --step-3: clamp(1.814rem, 1.086rem + 3.24vw, 4.324rem); 
+  --step-4: clamp(2.026rem, 0.842rem + 5.27vw, 6.106rem); 
+  --step-5: clamp(2.263rem, 0.917rem + 5.98vw, 6.898rem); 
+  --step-6: clamp(2.823rem, 2.205rem + 2.75vw, 4.955rem); 
+  --space-nav: clamp(1.089rem, 0.661rem + 1.9vw, 2.565rem); 
+  --space-v-s: clamp(1.75rem, 4vh, 3.5rem); 
+  --space-v-m: clamp(2.5rem, 7vh, 5rem); 
+  --space-v-l: clamp(5rem, 12vh, 10rem); 
+  --space-v-xl: clamp(6.25rem, 16dvh, 12.5rem); 
+  --space-stagger: clamp(0rem, 10vh, 7.5rem); 
+  --space-grid: clamp(1.671rem, 0.729rem + 4.19vw, 4.919rem); 
+  --pad: clamp(1.157rem, 0.043rem + 4.95vw, 4.995rem); 
   text-transform: uppercase;
 }
-
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
-
 html,
 body {
   margin: 0;
@@ -65,21 +47,17 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-
 html {
   overscroll-behavior-y: none;
 }
-
 #root {
   min-height: 100%;
   background: var(--bg);
 }
-
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
 }
-
 body {
   background: var(--bg);
   color: var(--text);
@@ -87,7 +65,6 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-
 h1,
 h2,
 h3,
@@ -95,26 +72,21 @@ p,
 figure {
   margin: 0;
 }
-
-/* Текст страницы не выделяется; адрес почты остаётся копируемым. */
 body,
 body * {
   user-select: none;
   -webkit-user-select: none;
 }
-
 .contact__mail,
 .contact__mail * {
   user-select: text;
   -webkit-user-select: text;
 }
-
 .contact__mail::selection,
 .contact__mail *::selection {
   background: var(--accent);
   color: var(--text);
 }
-
 a {
   color: inherit;
   text-decoration: none;
@@ -128,13 +100,11 @@ a {
     transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: calc(var(--i, 0) * 90ms);
 }
-
 .is-in .reveal,
 .reveal.is-in {
   opacity: 1;
   transform: none;
 }
-
 .header {
   position: fixed;
   inset: 0 0 auto 0;
@@ -148,14 +118,11 @@ a {
     transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.9s ease;
 }
-
-/* Пока первый экран живёт как glyph-matrix, шапки нет — она проявляется вместе с текстом. */
 .hero-matrix .header {
   opacity: 0;
   pointer-events: none;
   transition: none;
 }
-
 .header--hidden {
   transform: translate3d(0, -100%, 0);
 }
@@ -165,17 +132,14 @@ a {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
-
 .header__logo span {
   color: var(--muted);
 }
-
 .header__nav {
   display: flex;
   gap: var(--space-nav);
   font-size: var(--step--1);
 }
-
 .header__nav a {
   color: var(--muted);
   transition: color 0.3s ease;
@@ -184,19 +148,13 @@ a {
 .header__nav a:hover {
   color: var(--text);
 }
-
 .hero {
   height: 100dvh;
 }
-
 .hero__sticky {
   position: relative;
-  /* dvh, а не vh: на iOS 100vh — это высота с убранной адресной строкой, и пока
-     она показана, экран был бы выше видимой части. */
+  
   height: 100dvh;
-  /* Фон обязан быть непрозрачным: ASCII-человек смешивается с ним режимом
-     screen; над прозрачным фоном чёрная подложка кадра рисовалась как есть —
-     полоса другого оттенка слева. */
   background: var(--bg);
   overflow: hidden;
   display: flex;
@@ -204,13 +162,11 @@ a {
   justify-content: flex-start;
   padding: 16dvh var(--pad) 0;
 }
-
 .hero__content {
   position: relative;
   z-index: 1;
   max-width: min(92vw, 1100px);
 }
-
 .hero__kicker {
   font-size: var(--step--2);
   letter-spacing: 0.08em;
@@ -225,12 +181,10 @@ a {
   letter-spacing: -0.04em;
   font-weight: 600;
 }
-
 .hero__line {
   display: block;
   will-change: transform, filter;
 }
-
 .hero__title em {
   font-family: var(--font-accent);
   font-weight: 400;
@@ -239,16 +193,12 @@ a {
   color: var(--accent);
 }
 
-/* «Можно» наезжает на «которые» и отделяется от него тонким контуром цвета фона. */
 .hero__title-pull {
   position: relative;
   z-index: 1;
   paint-order: stroke fill;
   -webkit-text-stroke: 2px var(--bg);
 }
-
-/* На телефонах кадр шире экрана и прижат правым краем: человек с ноутбуком —
-   правые две трети кадра, они и остаются во всю ширину внизу; высота не больше 58vh. */
 .ascii-video {
   position: absolute;
   inset: 0;
@@ -260,15 +210,11 @@ a {
   mix-blend-mode: screen;
   font-size: min(calc(170vw / (var(--cols) * 0.6)), calc(58dvh / var(--rows)));
 }
-
 .ascii-video__frame {
   position: relative;
   width: max-content;
   transform: translate3d(0, 3dvh, 0);
 }
-
-/* Само видео на экране не показывается — оно источник для холста ниже;
-   без фильтров и блендов, чтобы не грузить телефон. */
 .ascii-video__source {
   position: absolute;
   inset: 0;
@@ -278,11 +224,6 @@ a {
   opacity: 0;
   pointer-events: none;
 }
-
-/* Цвет кадра по клетке; растягивается на кадр и красит знаки через multiply/screen.
-   На 1px уже кадра со всех сторон: на дробном краю слой знаков полупрозрачен, и
-   подложка того же размера просвечивала полоской. Размер задавать явно: у canvas
-   как у замещаемого элемента inset без width/height не растягивает, а сдвигает. */
 .ascii-video__color {
   position: absolute;
   inset: 1px;
@@ -291,10 +232,6 @@ a {
   height: calc(100% - 2px);
   overflow: hidden;
 }
-
-/* Нижние знаки постепенно теряют цвет и сходятся со светлой бумагой следующей
-   секции. Градиент лежит на цветном слое, поэтому осветляются только глифы,
-   а прямоугольная подложка ASCII остаётся невидимой. */
 .ascii-video__color::after {
   content: "";
   position: absolute;
@@ -308,7 +245,6 @@ a {
   );
   mix-blend-mode: screen;
 }
-
 .ascii-video__glyphs {
   position: relative;
   margin: 0;
@@ -325,19 +261,15 @@ a {
   user-select: none;
   -webkit-user-select: none;
 }
-
 .ascii-video__row {
   display: block;
 }
 
-/* Glyph-matrix на старте: canvas с серой сеткой тех же клеток поверх всего первого
-   экрана; положение, размер и шрифт задаёт AsciiVideo, чтобы клетки совпали с сеткой видео. */
 .ascii-video__matrix {
   position: absolute;
   display: block;
   pointer-events: none;
 }
-
 .ascii-flower {
   margin: 0;
   font-family: var(--font-mono);
@@ -355,27 +287,22 @@ a {
 .ascii-flower__row {
   display: block;
 }
-
 @media (max-width: 899px) and (orientation: landscape) {
   .ascii-video {
     display: none;
   }
 }
-
 @media (min-width: 900px) {
   .hero__sticky {
     justify-content: center;
     padding: 0 var(--pad);
   }
-
   .hero__content {
     max-width: min(50vw, 640px);
   }
-
   .hero__title {
     font-size: clamp(40px, 5.2vw, 92px);
   }
-
   .ascii-video {
     justify-content: center;
     align-items: center;
@@ -386,43 +313,32 @@ a {
       calc(100dvh / var(--rows))
     );
   }
-
   .ascii-video__frame {
     transform: translate3d(0, 7dvh, 0);
   }
-
   .ascii-flower {
     font-size: min(1.3dvh, 0.74vw);
   }
 }
-
-/* Сцена «О себе»: экран стоит на месте, пока прокрутка ведёт наезд на букву
-   «г» в слове «графикой». Высота сверх экрана — это ход наезда (Intro.jsx). */
 .intro-scene {
   position: relative;
   background: var(--paper);
   height: 260vh;
 }
-
 .intro-scene--flat {
   height: auto;
 }
-
 .intro {
   position: sticky;
   top: 0;
   height: 100dvh;
-  /* Буква вырастает далеко за края — за пределы экрана её не выпускаем. */
   overflow: hidden;
-  /* Бумага секции: раньше её рисовал общий холст под секциями, теперь свой фон. */
   background: var(--paper);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* По 100px воздуха сверху и снизу сверх экрана. */
   padding: 100px var(--pad);
 }
-
 .intro-scene--flat .intro {
   position: relative;
   height: auto;
@@ -430,8 +346,6 @@ a {
   overflow: visible;
 }
 
-/* Чернила буквы, залившие кадр. Цвет — фон «Избранных работ», поэтому конец
-   сцены и начало следующей секции сходятся без стыка. */
 .intro__ink {
   position: absolute;
   inset: 0;
@@ -440,60 +354,34 @@ a {
   opacity: 0;
   pointer-events: none;
 }
-
 .intro-scene--flat .intro__ink {
   display: none;
 }
-
-/* Слово неразрывно, буква — отдельный слой для волны появления (Intro.jsx). */
 .intro__word {
   display: inline-block;
   white-space: nowrap;
 }
-
 .intro__char {
   display: inline-block;
   will-change: color;
 }
-
-/* Обёртка наезда: на ней сдвиг кадра, а на самом тексте — zoom. Держим их
-   врозь, чтобы сдвиг считался в настоящих пикселях.
-
-   Набор внутри обёртки НЕ центрируется раскладкой — ни `margin: auto`, ни
-   `justify-content`. Оба способа по-разному кладут переполняющий блок в разных
-   движках (авто-поля при переполнении обнуляются, флекс выпускает за оба края),
-   а на iOS к этому добавляется то, что ширина под `zoom` не считается
-   увеличенной. Центрирование целиком ведёт трансформ из Intro.jsx: он и так
-   каждый кадр наводит букву в центр экрана, а раскладке остаётся только
-   предсказуемый угол — левый верхний край обёртки в любом движке. */
 .intro__zoom {
   transform-origin: 0 0;
-  /* Вне потока и приколота к углу экрана сцены. Так её место не зависит ни от
-     собственной высоты (а она под наездом вырастает в десятки раз), ни от того,
-     как движок центрирует переполняющий блок. Положение целиком задаёт
-     трансформ из Intro.jsx, и считать его можно наперёд, ничего не замеряя. */
   position: absolute;
   top: 0;
   left: 0;
   z-index: 1;
 }
-
 .intro__text {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  /* Текст — главный объект экрана: крупно, по центру, чёрным (07.09.2026).
-     Набор — Inter, как весь интерфейс, а не акцентный курсив.
-     Границы clamp в rem, а не в px: при увеличенном системном шрифте кегль и
-     отступы растут вместе с ним. Трекинг задан ступенями ниже — одно значение
-     на все размеры всегда неверно на одном из концов. */
   font-size: var(--step-4);
   line-height: 1.04;
   letter-spacing: -0.035em;
   font-optical-sizing: auto;
   max-width: 18ch;
-  /* Не `0 auto`: положение задаёт трансформ обёртки, см. .intro__zoom выше. */
   margin: 0;
   text-align: center;
   font-family: var(--font);
@@ -501,33 +389,25 @@ a {
   font-weight: 600;
   color: #0b0b0d;
 }
-
 .intro__text-accent {
-  /* Весь блок «О себе» набран одинаково — строка больше ничем не выделяется. */
   color: inherit;
   font-family: inherit;
 }
-
-/* Трекинг по кеглю: чем крупнее набор, тем плотнее. На узком экране кегль
-   средний, и −0.035em там уже слипается. */
 @media (max-width: 1180px) {
   .intro__text {
     letter-spacing: -0.025em;
   }
 }
-
 .works {
   position: relative;
   background: transparent;
   padding: var(--space-v-s) var(--pad) var(--space-v-l);
 }
-
 .works__head,
 .featured-work {
   position: relative;
   z-index: 4;
 }
-
 .works__head {
   display: flex;
   align-items: baseline;
@@ -535,18 +415,15 @@ a {
   padding-bottom: 28px;
   margin-bottom: var(--space-v-m);
 }
-
 .works__head h2 {
   font-size: var(--step-2);
   font-weight: 500;
   letter-spacing: -0.02em;
 }
-
 .works__head p {
   font-size: var(--step--2);
   color: var(--muted);
 }
-
 .featured-work {
   display: grid;
   grid-template-columns: minmax(240px, .62fr) minmax(0, 1.38fr);
@@ -554,30 +431,25 @@ a {
   align-items: center;
   min-height: min(660px, 72svh);
 }
-
 .featured-work__gallery {
   width: min(100%, 720px);
   min-width: 0;
   justify-self: end;
   overflow: visible;
 }
-
 .featured-work__main-link {
   display: block;
   color: inherit;
 }
-
 .featured-work__hero {
   position: relative;
   overflow: hidden;
   border-radius: 10px;
   background: var(--bg-soft);
 }
-
 .featured-work__hero {
   aspect-ratio: 16 / 9;
 }
-
 .featured-work__hero img {
   position: absolute;
   inset: -4% 0;
@@ -590,11 +462,9 @@ a {
   transform-origin: 50% 50%;
   will-change: transform;
 }
-
 .featured-work__hero img {
   object-position: center;
 }
-
 .featured-work__showcase {
   aspect-ratio: 1.2;
   overflow: visible;
@@ -608,7 +478,6 @@ a {
   inset: 0;
   overflow: visible;
 }
-
 .featured-work__video-card {
   position: absolute;
   top: 50%;
@@ -621,7 +490,6 @@ a {
     opacity 1.1s ease;
   will-change: transform, filter, opacity;
 }
-
 .featured-work__video-surface {
   width: 100%;
   height: 100%;
@@ -633,7 +501,6 @@ a {
   transition: transform 1.4s cubic-bezier(.22, 1, .36, 1);
   will-change: transform;
 }
-
 .featured-work__video-card video {
   display: block;
   width: 100%;
@@ -641,21 +508,18 @@ a {
   object-fit: cover;
   pointer-events: none;
 }
-
 .featured-work__video-card.is-active {
   z-index: 3;
   opacity: 1;
   filter: blur(0);
   transform: translate3d(-50%, -50%, 0) rotate(0deg) scale(1);
 }
-
 .featured-work__video-card.is-next {
   z-index: 1;
   opacity: .42;
   filter: blur(12px) saturate(.65);
   transform: translate3d(-16%, -92%, 0) rotate(10deg) scale(.56);
 }
-
 .featured-work__video-card.is-previous {
   z-index: 0;
   opacity: .3;
@@ -666,25 +530,20 @@ a {
 .featured-work__video-card.is-next .featured-work__video-surface {
   animation: friz-orbit-surface-next 7s ease-in-out infinite alternate;
 }
-
 .featured-work__video-card.is-previous .featured-work__video-surface {
   animation: friz-orbit-surface-previous 8.5s ease-in-out infinite alternate;
 }
-
 @keyframes friz-orbit-surface-next {
   from { transform: translate3d(-4%, -5%, 0) rotate(-2deg); }
   to { transform: translate3d(5%, 5%, 0) rotate(2deg); }
 }
-
 @keyframes friz-orbit-surface-previous {
   from { transform: translate3d(5%, 4%, 0) rotate(2deg); }
   to { transform: translate3d(-4%, -5%, 0) rotate(-2deg); }
 }
-
 .featured-work__showcase .featured-work__open {
   z-index: 5;
 }
-
 .featured-work__open {
   position: absolute;
   right: 18px;
@@ -697,7 +556,6 @@ a {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
-
 .featured-work__content {
   display: flex;
   flex-direction: column;
@@ -706,11 +564,9 @@ a {
   text-transform: none;
   color: #bfd0df;
 }
-
 .featured-work__intro {
   font-family: "Classic Russian", Georgia, serif;
 }
-
 .featured-work__intro h3 {
   font-family: inherit;
   font-size: clamp(40px, 4vw, 64px);
@@ -719,7 +575,6 @@ a {
   letter-spacing: -0.035em;
   color: #a8c8eb;
 }
-
 .featured-work__description {
   max-width: 36ch;
   margin-top: clamp(24px, 3vw, 40px);
@@ -731,7 +586,6 @@ a {
   letter-spacing: -0.01em;
   text-wrap: pretty;
 }
-
 .featured-work__summary {
   max-width: none;
   margin-top: 40px;
@@ -743,7 +597,6 @@ a {
   text-align: left;
   text-wrap: pretty;
 }
-
 .featured-work__media {
   --media-width: clamp(68px, 6vw, 96px);
   position: relative;
@@ -756,7 +609,6 @@ a {
   vertical-align: middle;
   background: var(--bg-soft);
 }
-
 .featured-work__media img {
   position: absolute;
   top: 0;
@@ -770,16 +622,13 @@ a {
   transform-origin: center;
   transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
 }
-
 .featured-work__media:hover img {
   transform: translateX(-50%) scale(1.08);
 }
-
 .featured-work__facts {
   margin-top: clamp(32px, 4vw, 56px);
   max-width: 36rem;
 }
-
 .featured-work__facts > div {
   display: grid;
   grid-template-columns: 72px 1fr;
@@ -787,13 +636,11 @@ a {
   padding: 16px 0;
   border-top: 1px solid rgb(146 174 200 / .16);
 }
-
 .featured-work__facts dt,
 .featured-work__facts dd {
   font-size: var(--step--2);
   line-height: 1.4;
 }
-
 .featured-work__facts dt {
   color: var(--muted);
 }
@@ -801,7 +648,6 @@ a {
 .featured-work__facts dd {
   margin: 0;
 }
-
 .featured-work__cta {
   display: flex;
   align-items: center;
@@ -813,12 +659,9 @@ a {
   color: var(--text);
   font-size: var(--step--1);
 }
-
 .featured-work__cta span {
   color: var(--accent);
 }
-
-/* Экран проекта, растущий из карточки до размеров окна перед открытием сайта. */
 .work-zoom {
   position: fixed;
   z-index: 200;
@@ -832,7 +675,6 @@ a {
     height 0.9s cubic-bezier(0.7, 0, 0.2, 1),
     border-radius 0.9s cubic-bezier(0.7, 0, 0.2, 1);
 }
-
 .work-zoom img {
   width: 100%;
   height: 100%;
@@ -840,7 +682,6 @@ a {
   object-position: top;
   display: block;
 }
-
 .work-zoom.is-open {
   top: 0 !important;
   left: 0 !important;
@@ -848,16 +689,13 @@ a {
   height: 100dvh !important;
   border-radius: 0;
 }
-
 .is-zooming {
   overflow: hidden;
 }
-
 .stack {
   --n: 3;
   height: 400vh;
 }
-
 .stack__sticky {
   position: sticky;
   top: 0;
@@ -868,16 +706,6 @@ a {
   padding: 0 var(--pad);
   background: var(--bg);
 }
-
-/* Стили компонента MorphingText — перевод Tailwind-классов MagicUI:
-   relative mx-auto w-full max-w-3xl text-center leading-none font-bold
-   filter-[url(#threshold)_blur(0.6px)].
-   Жирность 700 и крупный кегль здесь не косметика: порог feColorMatrix
-   срезает всё, что тоньше его среза, и на прежних 28px/500 буквы исчезали на
-   стыке целиком — морфа не было ни в Safari, ни в Chrome на телефоне.
-   Кегли предельные по замеру: у MagicUI фразы в одно слово и в одну строку, а
-   здесь длинные — на 390px строка упирается в край уже на 48px. Высота блока
-   задана явно, потому что строки лежат абсолютно и своей высоты не дают. */
 .morphing-text {
   position: relative;
   z-index: 2;
@@ -892,14 +720,12 @@ a {
   font-size: 44px;
   height: 230px;
 }
-
 @media (min-width: 768px) {
   .morphing-text {
     font-size: 56px;
     height: 200px;
   }
 }
-
 @media (min-width: 1024px) {
   .morphing-text {
     font-size: 64px;
@@ -907,8 +733,6 @@ a {
   }
 }
 
-/* Строки лежат друг на друге и центрируются по вертикали: фраза переносится,
-   и выравнивание по верхнему краю (как в оригинале) их бы рассогласовало. */
 .morphing-text__line {
   position: absolute;
   inset: 0;
@@ -917,7 +741,6 @@ a {
   justify-content: center;
   width: 100%;
 }
-
 .morphing-text__canvas {
   display: none;
   position: absolute;
@@ -926,17 +749,14 @@ a {
   height: 100%;
   pointer-events: none;
 }
-
 .morphing-text--gpu { filter: none; }
 .morphing-text--gpu .morphing-text__canvas { display: block; }
 .morphing-text--gpu .morphing-text__line { visibility: hidden; }
-
 .morphing-text__filter {
   position: fixed;
   width: 0;
   height: 0;
 }
-
 .stack__cards {
   position: absolute;
   inset: 0;
@@ -968,14 +788,12 @@ a {
   );
   will-change: translate, opacity;
 }
-
 .stack__logo svg,
 .stack__logo img {
   width: 100%;
   height: 100%;
   display: block;
 }
-
 .stack__wordmark {
   font-size: calc(var(--w) * 0.26px);
   font-weight: 600;
@@ -983,11 +801,9 @@ a {
   text-transform: lowercase;
   white-space: nowrap;
 }
-
 .burn {
   height: 320vh;
 }
-
 .burn__sticky {
   position: sticky;
   top: 0;
@@ -997,7 +813,6 @@ a {
   place-items: center;
   background: var(--bg);
 }
-
 .burn__reveal {
   position: relative;
   z-index: 1;
@@ -1007,7 +822,6 @@ a {
   opacity: calc((var(--p, 0) - 0.42) * 2.4);
   transform: translate3d(0, calc((1 - var(--p, 0)) * 3vh), 0);
 }
-
 .burn__kicker {
   font-size: var(--step--2);
   letter-spacing: 0.08em;
@@ -1015,14 +829,12 @@ a {
   color: #829fbe;
   margin-bottom: 24px;
 }
-
 .burn__title {
   font-size: var(--step-3);
   line-height: 1.05;
   letter-spacing: -0.03em;
   font-weight: 600;
 }
-
 .burn__text {
   margin: 26px auto 0;
   max-width: 46ch;
@@ -1030,7 +842,6 @@ a {
   line-height: 1.55;
   color: var(--muted);
 }
-
 .burn__canvas {
   position: absolute;
   top: 0;
@@ -1039,7 +850,6 @@ a {
   height: 100%;
   display: block;
 }
-
 .contact {
   min-height: 100svh;
   display: flex;
@@ -1050,7 +860,6 @@ a {
   color: #bfd0df;
   background: var(--bg);
 }
-
 .contact__kicker {
   display: inline-flex;
   align-items: center;
@@ -1060,7 +869,6 @@ a {
   color: #94a9bc;
   margin-bottom: clamp(28px, 4vw, 52px);
 }
-
 .contact__kicker::before {
   content: "";
   width: 5px;
@@ -1070,23 +878,23 @@ a {
   background: #a8c8eb;
   box-shadow: 0 0 12px rgb(168 200 235 / .35);
 }
-
 .contact__title {
   max-width: 15ch;
-  font-size: clamp(44px, 6.6vw, 106px);
-  line-height: 1.08;
+  font-size: clamp(3rem, 7.5vw, 8.25rem);
+  line-height: 1.06;
   letter-spacing: -0.025em;
   font-weight: 400;
-  color: --text;
+  color: #a8c8eb;
+  background: linear-gradient(90deg, #a8c8eb 0%, #7490b6 27%, #3e4a63 58%, #202633 78%, #11151d 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-
 .contact__title span {
-  color: #829fbe;
   font-family: inherit;
   font-style: normal;
   font-weight: 400;
 }
-
 .contact__mail {
   text-transform: lowercase;
   margin-top: clamp(32px, 5vw, 64px);
@@ -1105,7 +913,6 @@ a {
   color: #e0edfa;
   border-color: #a8c8eb;
 }
-
 .contact__mail:focus-visible {
   outline: 2px solid #a8c8eb;
   outline-offset: 6px;
@@ -1123,7 +930,6 @@ a {
   background: #f1f0ec;
   color: #11151d;
 }
-
 .site-footer__signature {
   align-self: center;
   width: 100%;
@@ -1144,10 +950,14 @@ a {
   gap: 24px;
   font-size: var(--step--2);
 }
-
 .site-footer__meta a {
   color: inherit;
   transition: opacity .2s;
+}
+.site-footer__links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .site-footer__meta a:hover { opacity: .55; }
@@ -1155,15 +965,10 @@ a {
   outline: 2px solid currentColor;
   outline-offset: 6px;
 }
-
 @media (max-width: 760px) {
   .intro {
     padding: 100px 14px;
   }
-
-  /* Кегль упирается не в экран, а в самое длинное слово: «ЗАВОРАЖИВАЮЩИЕ» в
-     Inter при здешнем трекинге занимает 10.55em, и при большем размере оно
-     вылезает за край. Меняешь letter-spacing — пересчитай делитель. */
   .intro__text {
     font-size: min(9vw, calc((100vw - 28px) / 10.65));
     line-height: 1.16;
@@ -1171,27 +976,22 @@ a {
     gap: 8px;
     max-width: none;
   }
-
   .works__head {
     margin-bottom: 44px;
   }
-
   .featured-work {
     grid-template-columns: 1fr;
     gap: 44px;
     min-height: 0;
   }
-
   .featured-work__gallery {
     order: 1;
   }
-
   .featured-work__content {
     order: 2;
     width: 100%;
     justify-self: stretch;
   }
-
   .featured-work__showcase {
     aspect-ratio: 1;
   }
@@ -1200,43 +1000,42 @@ a {
     width: 86%;
     border-radius: 8px;
   }
-
   .featured-work__content {
     position: static;
     min-height: 0;
   }
-
   .featured-work__intro h3 {
     font-size: clamp(44px, 13vw, 64px);
   }
-
   .featured-work__description {
     max-width: 36ch;
     font-size: clamp(18px, 4.9vw, 22px);
     line-height: 1.6;
   }
-
   .contact__title {
-    font-size: clamp(40px, 10.7vw, 72px);
+    font-size: clamp(2.7rem, 11.7vw, 5rem);
+    line-height: 1.14;
+    letter-spacing: -0.018em;
     max-width: 100%;
   }
-
   .site-footer {
     min-height: 24svh;
     padding-inline: 20px;
     padding-bottom: 20px;
   }
-
   .site-footer__signature {
     transform: translateY(-.16em);
     font-size: 33vw;
     letter-spacing: -.065em;
   }
-
   .site-footer__meta {
     padding-top: 32px;
+    gap: 12px;
   }
 
+  .site-footer__links {
+    gap: 14px;
+  }
   .featured-work__summary {
     max-width: none;
     font-size: clamp(24px, 6.4vw, 32px);
@@ -1246,24 +1045,19 @@ a {
   .featured-work__media {
     --media-width: clamp(58px, 18vw, 80px);
   }
-
   .featured-work__facts {
     margin-top: 52px;
   }
-
   .featured-work__cta {
     margin-top: 40px;
   }
-
   .featured-work__open {
     right: 12px;
     bottom: 12px;
   }
-
   .burn {
     height: 260vh;
   }
-
   .stack {
     height: 360vh;
   }
@@ -1272,17 +1066,14 @@ a {
     z-index: 6;
     isolation: isolate;
   }
-
   .stack__logo {
     width: min(calc(var(--w) * 1px), 23vw);
   }
 }
-
 .site-main {
   position: relative;
   background: var(--bg);
 }
-
 .stack__morph,
 .stack__cards,
 .burn__reveal {
@@ -1292,12 +1083,10 @@ a {
 .contact {
   position: relative;
 }
-
 .contact > * {
   position: relative;
   z-index: 4;
 }
-
 .scroll-stem {
   position: absolute;
   left: 0;
@@ -1307,14 +1096,12 @@ a {
   opacity: 0;
   pointer-events: none;
 }
-
 .scroll-stem__svg {
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
-
 .scroll-stem__path {
   fill: none;
   stroke: #6f89aa;
@@ -1328,7 +1115,6 @@ a {
     drop-shadow(0 0 5px rgb(142 172 208 / 0.48))
     drop-shadow(0 0 16px rgb(116 144 182 / 0.24));
 }
-
 .scroll-stem__path:not(.scroll-stem__core) {
   stroke: #718fae;
   opacity: .48;
@@ -1341,14 +1127,12 @@ a {
   opacity: .85;
   filter: blur(.3px);
 }
-
 .scroll-stem__flower {
   position: absolute;
   display: block;
   filter: brightness(1.22) contrast(1.06);
   pointer-events: none;
 }
-
 .scroll-stem__renderer {
   position: absolute;
   width: 1px;
@@ -1356,7 +1140,6 @@ a {
   opacity: 0;
   pointer-events: none;
 }
-
 .scroll-stem__branch {
   fill: none;
   stroke-linecap: round;
@@ -1365,14 +1148,12 @@ a {
   stroke-dashoffset: 1;
   vector-effect: non-scaling-stroke;
 }
-
 .scroll-stem__branch--back {
   stroke: #718fae;
   stroke-width: 5.8;
   opacity: .48;
   filter: blur(1.1px) drop-shadow(0 0 6px rgb(142 172 208 / .3));
 }
-
 .scroll-stem__branch--core {
   stroke: #92aec8;
   stroke-width: 2.4;
@@ -1380,38 +1161,30 @@ a {
   filter: blur(.3px) drop-shadow(0 0 4px rgb(142 172 208 / .3));
 }
 
-/* Composite the connected silhouette before applying glow: intersections no
-   longer accumulate opacity or acquire bright circular seams. */
 .scroll-stem__joined--back {
   opacity: .48;
   filter: blur(1.1px) drop-shadow(0 0 6px rgb(142 172 208 / .3));
 }
-
 .scroll-stem__joined--core {
   opacity: .85;
   filter: blur(.3px);
 }
-
 .scroll-stem__svg .scroll-stem__joined > .scroll-stem__path,
 .scroll-stem__svg .scroll-stem__joined > .scroll-stem__branch {
   opacity: 1;
   filter: none;
 }
-
 .scroll-stem__bud {
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
   filter: drop-shadow(0 0 12px rgb(116 144 182 / 0.28));
 }
-
 @media (max-width: 767px) {
   .scroll-stem__path {
     stroke-width: 4.2;
   }
 }
-
-/* Единый display-шрифт для всей крупной типографики сайта. */
 .intro__text,
 .burn__title,
 .contact__title {
@@ -1419,7 +1192,6 @@ a {
   font-style: normal;
   font-weight: 400;
 }
-
 .contact__title span {
   font-style: normal;
 }

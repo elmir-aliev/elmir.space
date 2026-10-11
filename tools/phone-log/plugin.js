@@ -3,9 +3,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Консоль настоящего телефона в терминал: Web Inspector требует кабеля и
-// пляски с меню «Разработка», а тут страница сама шлёт ошибки и состояние
-// сцен на dev-сервер. Живёт только в `serve`, в сборку не попадает.
 const ENDPOINT = '/__phone-log';
 const MAX_BODY = 1024 * 1024;
 
@@ -26,7 +23,6 @@ const readBody = (req) =>
     req.on('error', reject);
   });
 
-// В терминал — только то, что требует внимания; полный поток лежит в файле.
 const LOUD = /^(error|rejection|console\.error|webglcontext(lost|creationerror))$/;
 
 export default function phoneLog({ logDir } = {}) {

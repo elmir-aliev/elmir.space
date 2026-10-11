@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { flowerVertex, flowerFragment, flowerDisplay } from '../three/flowerShaders';
 
-// Ksenia Kondrashova's feedback renderer, adapted for React and automatic growth.
-// Fixed seeds make the composition repeatable; no click handlers or global canvas.
 export function HeroFlowers() {
   const ref = useRef(null);
 
@@ -13,7 +11,6 @@ export function HeroFlowers() {
     try {
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
     } catch {
-      // The title remains usable when WebGL is unavailable.
       return undefined;
     }
     const geometry = new THREE.PlaneGeometry(2, 2);
@@ -103,7 +100,6 @@ export function HeroFlowers() {
       cancelAnimationFrame(frame);
       last = 0;
       if (motion.matches) {
-        // Resolve the same feedback steps offscreen, then show a still garden.
         for (let i = 0; i < flowers.length; i += 1) {
           for (let t = 0; t < 60; t += 1) draw(i, t / 60);
         }

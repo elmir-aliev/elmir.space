@@ -25,7 +25,11 @@ export function Contact() {
         <div className="site-footer__signature" aria-label="Elmir">ELMIR</div>
         <div className="site-footer__meta">
           <span>© {new Date().getFullYear()} Elmir</span>
-          <a href="#top">Наверх ↑</a>
+          <div className="site-footer__links">
+            <a href="https://t.me/elmir34" target="_blank" rel="noreferrer">Telegram</a>
+            <a href="https://github.com/elmir-aliev" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="#top">Наверх ↑</a>
+          </div>
         </div>
       </footer>
     </>

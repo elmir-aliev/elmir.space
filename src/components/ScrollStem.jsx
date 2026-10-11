@@ -24,13 +24,11 @@ const FLOWER_DATA = [
   { seed:[.74,.83], path:'secondary', pathProgress:1, animation:.985, side:1, scale:.82, terminal:true },
 ];
 const BRANCH_GROWTH=.025;
-// Leave scroll room for terminal shoots after the trunk reaches the bottom.
 const TRUNK_RATE=1.16;
 const flowers=FLOWER_DATA.map(flower=>{
   const arrival=flower.path==='primary'
     ? flower.pathProgress*.38
     : .4+flower.pathProgress/TRUNK_RATE*.6;
-  // Child shoots wait until the parent bough is fully drawn.
   const branchStart=arrival+.004+(flower.tree&&!flower.leader?BRANCH_GROWTH+.003:0);
   return {...flower,progress:branchStart,branchStart,bloomProgress:branchStart+BRANCH_GROWTH+.006};
 });
@@ -92,7 +90,7 @@ export function ScrollStem() {
 
     let renderer;
     try { renderer=createScrollFlowerRenderer(canvasRef.current,flowers,flowerCanvases.current); }
-    catch { /* SVG vine remains as the fallback. */ }
+    catch {  }
     let top=0,mainTop=0,primaryStart=0,primaryEnd=1,secondaryStart=0,secondaryEnd=1;
     let placements=[];
     let layoutWidth=window.innerWidth;
@@ -138,7 +136,6 @@ export function ScrollStem() {
         let x,y,d,tipTx,tipTy;
 
         if(flower.terminal){
-          // A separate final shoot continues below the unchanged contact tree.
           x=width*(width<768?.88:.86);y=footerEndY;
           const bend=Math.max(120,(y-p.y)*.42);
           const c1x=p.x-width*.04,c1y=p.y+bend*.34;
@@ -153,7 +150,6 @@ export function ScrollStem() {
           const inset=size*.6+12;
           const constrainX=value=>Math.max(inset,Math.min(width-inset,value));
           if(!limb){
-            // A long, continuous bough; no elbow or identical Y-shaped forks.
             const end={x:constrainX(p.x+nx*reach+tx*reach*.3),y:Math.min(height-inset,p.y+ty*reach*.82+ny*reach*.35)};
             const c1={x:p.x+tx*reach*.5,y:p.y+ty*reach*.5};
             const c2={x:end.x-nx*reach*.28,y:end.y-reach*.2};
@@ -163,7 +159,6 @@ export function ScrollStem() {
           if(flower.leader){
             ({start:origin,c1,c2,end}=limb);
           }else{
-            // A finer shoot sprouts tangentially from inside its parent curve.
             const t=.56+(flower.pathProgress-.56)*.3,u=1-t;
             origin={
               x:u*u*u*p.x+3*u*u*t*limb.c1.x+3*u*t*t*limb.c2.x+t*t*t*limb.end.x,

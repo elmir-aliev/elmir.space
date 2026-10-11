@@ -1,6 +1,3 @@
-// Снимает с телефона то, что иначе видно только в Web Inspector: ошибки,
-// потерю WebGL-контекста и состояние сцен по ходу прокрутки. Уходит на
-// dev-сервер, читается из терминала. Только `apply: 'serve'`.
 var ENDPOINT = '/__phone-log';
 var queue = [];
 var flushing = false;
@@ -28,7 +25,6 @@ function flush() {
 setInterval(flush, 1000);
 addEventListener('pagehide', flush);
 
-// --- ошибки ---
 addEventListener('error', function (e) {
   if (e.target && e.target !== window) {
     push('resource-error', { tag: e.target.tagName, src: e.target.currentSrc || e.target.src });
@@ -50,18 +46,13 @@ addEventListener('unhandledrejection', function (e) {
   };
 });
 
-// Событие не всплывает — ловим на фазе перехвата.
 ['webglcontextlost', 'webglcontextcreationerror', 'webglcontextrestored'].forEach(function (type) {
   addEventListener(type, function (e) {
     push(type, { cls: e.target && e.target.className, msg: e.statusMessage || '' });
   }, true);
 });
 
-// --- разовый замер возможностей ---
 function probe(tag) {
-  // getContext здесь не зовём: на пустом холсте он создаст контекст, а на iOS
-  // их лимит мал — зонд убил бы то, что измеряет. Живость контекста узнаём из
-  // событий webglcontextlost/creationerror выше.
   var canvases = [].map.call(document.querySelectorAll('canvas'), function (c) {
     var r = c.getBoundingClientRect();
     return {
@@ -81,13 +72,9 @@ function probe(tag) {
     mem: performance.memory ? performance.memory.usedJSHeapSize : null,
   });
 }
-// Учитывает ли getBoundingClientRect множитель `zoom`. В Blink и в свежем
-// WebKit — да, на iOS Safari нужно проверить: если нет, всякая поправка
-// положения по замеру рамки внутри zoom-сцены не сходится.
 function zoomProbe() {
   var el = document.querySelector('.intro__text');
   if (!el) return;
-  // Замер сам ставит zoom — не лезем, если сцена уже в наезде.
   var cur = parseFloat(el.style.zoom);
   if (cur && cur !== 1) return;
   var box = el.parentElement;
@@ -111,7 +98,6 @@ function zoomProbe() {
   el.style.zoom = '4';
   el.getBoundingClientRect();
   var after = snap();
-  // Кого браузер реально рисует в точке, которую накрыла бы выросшая буква.
   var probePoint = ch ? document.elementFromPoint(
     Math.min(innerWidth - 2, before.charLeft + before.charW * 2.5),
     Math.round(innerHeight / 2),
@@ -128,10 +114,6 @@ function zoomProbe() {
 addEventListener('load', function () { probe('load'); setTimeout(function () { zoomProbe(); probe('load+3s'); }, 3000); });
 addEventListener('resize', function () { probe('resize'); });
 
-// --- темп кадров ---
-// Отличает «не успеваем считать» (большие промежутки между кадрами) от
-// «считаем вовремя, но картинка отстаёт от нативной инерции iOS» (промежутки
-// ровные, а сцена всё равно дёргается).
 var frames = [];
 var prevTs = 0;
 (function tick(ts) {
@@ -150,8 +132,6 @@ function frameStats() {
   return { p50: at(0.5), p95: at(0.95), max: +a[a.length - 1].toFixed(1), n: a.length };
 }
 
-// Рывок = насколько неровно меняется величина от кадра к кадру: берём вторую
-// разность ряда. У гладкого движения она около нуля, у дёрганья — всплески.
 function jerkStats() {
   var rows = window.__introJitter;
   if (!rows || rows.length < 12) return null;
@@ -172,7 +152,6 @@ function jerkStats() {
   return out;
 }
 
-// --- состояние сцен по ходу прокрутки ---
 var lastY = -1e9;
 setInterval(function () {
   var y = scrollY;
@@ -185,11 +164,6 @@ setInterval(function () {
   var scene = document.querySelector('.intro-scene');
   var r = text && text.getBoundingClientRect();
 
-  // Что нарисовано в центре экрана. Проверка нарочно независимая: считать
-  // отклонение той же формулой, что и код, бессмысленно — она покажет ноль
-  // даже когда формула неверна (так и вышло 08.09.2026). elementFromPoint
-  // спрашивает у движка про реальную отрисовку, и на iOS это единственный
-  // честный способ узнать, попала буква в центр или уехала.
   var hit = null;
   if (text) {
     var el = document.elementFromPoint(Math.round(innerWidth / 2), Math.round(innerHeight / 2));
@@ -197,7 +171,6 @@ setInterval(function () {
       hit = {
         cls: el.className || el.tagName,
         ch: (el.textContent || '').slice(0, 12),
-        // Совпадает ли с буквой, в которую целится наезд.
         target: el === window.__introTarget,
       };
     }

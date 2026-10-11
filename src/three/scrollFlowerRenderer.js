@@ -4,14 +4,8 @@ import { flowerVertex, flowerFragment } from './flowerShaders';
 const FPS = 60;
 const PETAL_START_STEP = 14;
 const PETAL_END_STEP = 59;
-// In the hero the stem is drawn during the first ~0.2 s, then the petals open.
-// The scroll vine already supplies the stem, so we replay only the exact petal
-// phase of the same shader instead of drawing a second little stem inside the flower.
 const PETAL_DURATION = (PETAL_END_STEP - PETAL_START_STEP) / FPS;
 
-// The scroll flowers deliberately use the very same feedback shader and timing as
-// HeroFlowers. The only extra work here is cropping/rotating the accumulated
-// texture so a hero flower can sit on a branch instead of filling the whole hero.
 export function createScrollFlowerRenderer(canvas, flowers, flowerCanvases) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -37,11 +31,6 @@ export function createScrollFlowerRenderer(canvas, flowers, flowerCanvases) {
     },
   });
 
-  // Keep the blossom's RGB grading identical to `flowerDisplay` from the hero.
-  // The only difference is alpha: the hero sits on #0f1115 and can output black
-  // outside the flower, while this canvas floats over a light section.  We make
-  // ONLY those near-black background pixels transparent; the visible flower is
-  // otherwise the same icy-blue image, with the same soft feedback edge.
   const display = new THREE.ShaderMaterial({
     vertexShader: flowerVertex,
     fragmentShader: `
@@ -58,19 +47,11 @@ export function createScrollFlowerRenderer(canvas, flowers, flowerCanvases) {
         vec3 raw = texture2D(u_texture, .5 + p * u_extent).rgb;
         float light = dot(raw, vec3(.30,.38,.32));
 
-        // Use the SAME luminance structure as flowerDisplay in the hero:
-        // the feedback texture itself controls every highlight / overlap instead
-        // of flattening the whole blossom to one solid tint.  The base hue is
-        // the stem core colour so the flower still belongs to the scroll vine.
-        vec3 stemCore = vec3(146.0, 174.0, 200.0) / 255.0; // #92aec8
+        vec3 stemCore = vec3(146.0, 174.0, 200.0) / 255.0;
         float petalMask = smoothstep(.010, .052, light);
         float layer = smoothstep(.030, .58, light);
         vec3 blossom = stemCore * min(1.38, light * 1.28);
 
-        // The hero is rendered on a dark background, while this canvas floats
-        // above a light section. Make only the empty / very dark feedback
-        // transparent. Soft petals remain translucent and overlaps become denser,
-        // which keeps the hero-like glassy layers without a dark fringe.
         float alpha = petalMask * mix(.24, .78, layer);
         if (alpha < .008) discard;
         gl_FragColor = vec4(blossom, alpha);
@@ -128,9 +109,6 @@ export function createScrollFlowerRenderer(canvas, flowers, flowerCanvases) {
       renderer.setViewport(0, 0, outputSize, outputSize);
 
       const now = performance.now();
-      // A flower that was covered by the Friz card used to replay all missed
-      // feedback frames synchronously when it became visible again. Spread that
-      // work across RAFs instead of blocking one scroll frame.
       let feedbackBudget = reducedMotion ? Number.POSITIVE_INFINITY : 8;
 
       placements.forEach((box, index) => {
@@ -142,11 +120,6 @@ export function createScrollFlowerRenderer(canvas, flowers, flowerCanvases) {
         const active = progress >= activeAt;
 
         if (!active) {
-          // Reset on the very first frame above the bloom threshold. The old
-          // hysteresis cleared `wasActive` before the reset point was reached,
-          // so a second downward pass reused the old timestamp and the flower
-          // snapped open. Resetting the feedback state here guarantees the same
-          // hero-style opening animation every time the user scrolls down again.
           if (state.activatedAt !== null) {
             clearState(state);
             const flowerCanvas = flowerCanvases[index];
