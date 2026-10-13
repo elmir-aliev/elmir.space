@@ -132,7 +132,7 @@ export function ScrollStem() {
         const path=flower.path==='primary'?primaryRef.current:secondaryRef.current;
         const {p,tx,ty}=pointData(path,flower.pathProgress);
         const nx=-ty*flower.side,ny=tx*flower.side;
-        const size=(width<768?90:126)*flower.scale;
+        const size=(width<768?90:126)*flower.scale*1.3;
         let x,y,d,tipTx,tipTy;
 
         if(flower.terminal){
@@ -176,8 +176,8 @@ export function ScrollStem() {
           d=`M ${origin.x} ${origin.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${x} ${y}`;
           const tipLength=Math.max(.001,Math.hypot(x-c2.x,y-c2.y));
           tipTx=(x-c2.x)/tipLength;tipTy=(y-c2.y)/tipLength;
-          branchBacks.current[index].style.strokeWidth=flower.leader?'4.4':'3';
-          branchCores.current[index].style.strokeWidth=flower.leader?'1.9':'1.2';
+          branchBacks.current[index].style.strokeWidth=flower.leader?'5.72':'3.9';
+          branchCores.current[index].style.strokeWidth=flower.leader?'2.47':'1.56';
         } else {
           const branchLength=(width<768?66:108)*(0.9+flower.seed[0]*.2);
           const forward=branchLength*.9,spread=branchLength*.38;
