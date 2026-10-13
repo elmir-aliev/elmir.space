@@ -199,99 +199,6 @@ a {
   paint-order: stroke fill;
   -webkit-text-stroke: 2px var(--bg);
 }
-.ascii-video {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  right: -14vw;
-  mix-blend-mode: screen;
-  font-size: min(calc(170vw / (var(--cols) * 0.6)), calc(58dvh / var(--rows)));
-}
-.ascii-video__frame {
-  position: relative;
-  width: max-content;
-  transform: translate3d(0, 3dvh, 0);
-}
-.ascii-video__source {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
-}
-.ascii-video__color {
-  position: absolute;
-  inset: 1px;
-  display: block;
-  width: calc(100% - 2px);
-  height: calc(100% - 2px);
-  overflow: hidden;
-}
-.ascii-video__color::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    transparent 72%,
-    rgba(243, 240, 234, 0.42) 88%,
-    var(--paper) 100%
-  );
-  mix-blend-mode: screen;
-}
-.ascii-video__glyphs {
-  position: relative;
-  margin: 0;
-  background: #0f1115;
-  color: #fff;
-  mix-blend-mode: multiply;
-  font-family: var(--font-mono);
-  font-weight: 400;
-  text-transform: none;
-  line-height: 1;
-  white-space: pre;
-  font-variant-ligatures: none;
-  text-rendering: geometricPrecision;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.ascii-video__row {
-  display: block;
-}
-
-.ascii-video__matrix {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-}
-.ascii-flower {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-weight: 400;
-  text-transform: none;
-  font-size: min(0.68dvh, (100vw - var(--pad) * 2) / 52);
-  line-height: 1.188;
-  white-space: pre;
-  font-variant-ligatures: none;
-  text-rendering: geometricPrecision;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.ascii-flower__row {
-  display: block;
-}
-@media (max-width: 899px) and (orientation: landscape) {
-  .ascii-video {
-    display: none;
-  }
-}
 @media (min-width: 900px) {
   .hero__sticky {
     justify-content: center;
@@ -302,100 +209,6 @@ a {
   }
   .hero__title {
     font-size: clamp(40px, 5.2vw, 92px);
-  }
-  .ascii-video {
-    justify-content: center;
-    align-items: center;
-    left: 260px;
-    right: 0;
-    font-size: min(
-      calc(100vw / (var(--cols) * 0.6)),
-      calc(100dvh / var(--rows))
-    );
-  }
-  .ascii-video__frame {
-    transform: translate3d(0, 7dvh, 0);
-  }
-  .ascii-flower {
-    font-size: min(1.3dvh, 0.74vw);
-  }
-}
-.intro-scene {
-  position: relative;
-  background: var(--paper);
-  height: 260vh;
-}
-.intro-scene--flat {
-  height: auto;
-}
-.intro {
-  position: sticky;
-  top: 0;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--paper);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 100px var(--pad);
-}
-.intro-scene--flat .intro {
-  position: relative;
-  height: auto;
-  min-height: 100dvh;
-  overflow: visible;
-}
-
-.intro__ink {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: var(--bg);
-  opacity: 0;
-  pointer-events: none;
-}
-.intro-scene--flat .intro__ink {
-  display: none;
-}
-.intro__word {
-  display: inline-block;
-  white-space: nowrap;
-}
-.intro__char {
-  display: inline-block;
-  will-change: color;
-}
-.intro__zoom {
-  transform-origin: 0 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-}
-.intro__text {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: var(--step-4);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  font-optical-sizing: auto;
-  max-width: 18ch;
-  margin: 0;
-  text-align: center;
-  font-family: var(--font);
-  font-style: normal;
-  font-weight: 600;
-  color: #0b0b0d;
-}
-.intro__text-accent {
-  color: inherit;
-  font-family: inherit;
-}
-@media (max-width: 1180px) {
-  .intro__text {
-    letter-spacing: -0.025em;
   }
 }
 .works {
@@ -967,16 +780,6 @@ a {
   outline-offset: 6px;
 }
 @media (max-width: 760px) {
-  .intro {
-    padding: 100px 14px;
-  }
-  .intro__text {
-    font-size: min(9vw, calc((100vw - 28px) / 10.65));
-    line-height: 1.16;
-    letter-spacing: -0.015em;
-    gap: 8px;
-    max-width: none;
-  }
   .works__head {
     margin-bottom: 44px;
   }
@@ -1186,7 +989,6 @@ a {
     stroke-width: 5.46;
   }
 }
-.intro__text,
 .burn__title,
 .contact__title {
   font-family: var(--font-accent);
